@@ -1,7 +1,7 @@
 # Hue
 
-A native macOS viewer in French for HUE/USB cameras: live preview, 90° rotations,
-and PNG capture to the Desktop.
+A native macOS viewer in English and French for HUE/USB cameras: live preview,
+90° rotations, and PNG capture to the Desktop.
 The image fills the content of a standard macOS window. A collapsible dock contains
 the controls and camera picker. It uses Liquid Glass on macOS 26+ and a classic
 translucent material on macOS 13 through 15. Drag it to any of the four edges to
@@ -53,6 +53,26 @@ pattern with no text, without activating the camera.
 Demo captures are saved in the temporary Hue-Demo folder, or in the directory passed
 after `--capture-directory`, which is created if necessary.
 This mode does not change the user's preferences.
+
+The interface, menus, accessibility descriptions, and messages automatically follow
+the preferred macOS language among English and French.
+English is the source and fallback language. macOS permission prompts also use the
+app's translations. To check each language without changing system preferences,
+quit Hue between these two runs:
+
+```sh
+open -na build/Hue.app --args --demo -AppleLanguages '(en)'
+open -na build/Hue.app --args --demo -AppleLanguages '(fr)'
+```
+
+The `Resources/fr.lproj` and `Resources/en.lproj` tables are included in the bundle
+before signing. `Scripts/test.sh` validates their format and matching keys and
+placeholders, then loads both languages in isolated test processes, including
+permission strings and errors produced outside SwiftUI. The English fallback is
+also checked with an unsupported language. To run only these checks:
+`bash Scripts/test-localizations.sh`. The helper uses the macOS version declared
+in `Info.plist` and the Mac's architecture, or `HUE_TEST_ARCH` when set.
+
 The pipeline tests check the pixels for all four rotations, dimensions, shifted
 origins, and PNG encoding without filename collisions.
 The dock tests cover all four edges, snapping, and small windows.

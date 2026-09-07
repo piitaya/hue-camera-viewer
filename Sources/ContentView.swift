@@ -251,13 +251,13 @@ struct ContentView: View {
             .allowsHitTesting(false)
             .accessibilityHidden(true)
         }
-        .help("Choisir la caméra\n" + selectedCameraName)
+        .help(String(format: NSLocalizedString("Choisir la caméra\n%@", comment: "Camera picker tooltip, including the selected camera name"), selectedCameraName))
         .accessibilityLabel("Choisir la caméra")
         .accessibilityValue(selectedCameraName)
     }
 
     private var selectedCameraName: String {
-        camera.devices.first { $0.id == camera.selectedDeviceID }?.name ?? "Aucune caméra sélectionnée"
+        camera.devices.first { $0.id == camera.selectedDeviceID }?.name ?? NSLocalizedString("Aucune caméra sélectionnée", comment: "Fallback camera name")
     }
 
     private var captureButton: some View {
@@ -278,7 +278,7 @@ struct ContentView: View {
         .buttonStyle(.plain)
         .disabled(!model.canRequestCapture)
         .help("Capturer l’image sur le Bureau")
-        .accessibilityLabel(model.isSaving ? "Enregistrement en cours" : "Capturer sur le Bureau")
+        .accessibilityLabel(model.isSaving ? NSLocalizedString("Enregistrement en cours", comment: "Capture button while saving") : NSLocalizedString("Capturer sur le Bureau", comment: "Capture button accessibility label"))
     }
 
     private func showDockButton(for edge: DockEdge, size: CGSize) -> some View {
@@ -331,25 +331,25 @@ struct ContentView: View {
 
     private var emptyTitle: String {
         switch camera.state {
-        case .idle, .noCamera: return "Branchez votre caméra"
-        case .requestingPermission: return "Autorisez l’accès à la caméra"
-        case .starting: return "La caméra démarre…"
-        case .denied: return "L’accès à la caméra est désactivé"
-        case .failed: return "La caméra est indisponible"
-        case .running: return "Votre image arrive…"
+        case .idle, .noCamera: return NSLocalizedString("Branchez votre caméra", comment: "Camera empty state")
+        case .requestingPermission: return NSLocalizedString("Autorisez l’accès à la caméra", comment: "Camera empty state")
+        case .starting: return NSLocalizedString("La caméra démarre…", comment: "Camera empty state")
+        case .denied: return NSLocalizedString("L’accès à la caméra est désactivé", comment: "Camera empty state")
+        case .failed: return NSLocalizedString("La caméra est indisponible", comment: "Camera empty state")
+        case .running: return NSLocalizedString("Votre image arrive…", comment: "Camera empty state")
         }
     }
 
     private var emptyMessage: String {
         switch camera.state {
         case .idle, .noCamera:
-            return "Connectez la HUE à un port USB de votre Mac."
+            return NSLocalizedString("Connectez la HUE à un port USB de votre Mac.", comment: "Camera empty state")
         case .requestingPermission:
-            return "Acceptez la demande de macOS pour afficher l’aperçu."
+            return NSLocalizedString("Acceptez la demande de macOS pour afficher l’aperçu.", comment: "Camera empty state")
         case .starting, .running:
-            return "Préparation de l’aperçu."
+            return NSLocalizedString("Préparation de l’aperçu.", comment: "Camera empty state")
         case .denied:
-            return "Activez Hue dans Réglages Système → Confidentialité et sécurité → Caméra."
+            return NSLocalizedString("Activez Hue dans Réglages Système → Confidentialité et sécurité → Caméra.", comment: "Camera empty state")
         case .failed(let message):
             return message
         }
@@ -389,14 +389,14 @@ private struct CameraImageView: View {
 }
 
 private struct DockButton: View {
-    let title: String
+    let title: LocalizedStringKey
     let symbol: String
     var size: CGFloat = 42
     var iconSize: CGFloat = 17
     let action: () -> Void
     @State private var hovering = false
 
-    init(_ title: String, symbol: String,
+    init(_ title: LocalizedStringKey, symbol: String,
          size: CGFloat = 42, iconSize: CGFloat = 17, action: @escaping () -> Void) {
         self.title = title
         self.symbol = symbol
@@ -416,7 +416,7 @@ private struct DockButton: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
-        .help(title)
-        .accessibilityLabel(title)
+        .help(Text(title))
+        .accessibilityLabel(Text(title))
     }
 }

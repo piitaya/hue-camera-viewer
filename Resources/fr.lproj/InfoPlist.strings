@@ -1,0 +1,4 @@
+/* System permission prompts and About panel copyright. */
+"NSCameraUsageDescription" = "Hue utilise votre caméra pour afficher vos documents et en capturer des images sur votre Bureau.";
+"NSDesktopFolderUsageDescription" = "Hue enregistre vos captures PNG directement sur votre Bureau.";
+"NSHumanReadableCopyright" = "Hue — Visualiseur de documents";

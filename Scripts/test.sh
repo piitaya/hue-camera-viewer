@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+bash "$(dirname "$0")/test-localizations.sh"
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="${HUE_BUILD_DIR:-$PROJECT_DIR/build}"
 TEST_ARCH="${HUE_TEST_ARCH:-$(uname -m)}"

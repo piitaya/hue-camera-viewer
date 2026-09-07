@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDevelopmentRegion</key><string>fr</string>
-    <key>CFBundleLocalizations</key><array><string>fr</string></array>
+    <key>CFBundleLocalizations</key><array><string>fr</string><string>en</string></array>
     <key>CFBundleDisplayName</key><string>Hue</string>
     <key>CFBundleName</key><string>Hue</string>
     <key>CFBundleExecutable</key><string>Hue</string>

@@ -20,6 +20,9 @@ xcrun swiftc -O -module-cache-path "$BUILD_DIR/tool-module-cache" \
     "$PROJECT_DIR/Scripts/MakeIcon.swift" -o "$BUILD_DIR/make-icon"
 "$BUILD_DIR/make-icon" "$BUILD_DIR/Hue.iconset"
 iconutil -c icns "$BUILD_DIR/Hue.iconset" -o "$APP_DIR/Contents/Resources/Hue.icns"
+for localization in "$PROJECT_DIR"/Resources/*.lproj; do
+    ditto "$localization" "$APP_DIR/Contents/Resources/$(basename "$localization")"
+done
 
 SIGNING_IDENTITY="${HUE_SIGNING_IDENTITY:--}"
 # Sign only after both architectures and all resources have been assembled.

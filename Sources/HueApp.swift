@@ -29,7 +29,7 @@ struct HueApp: App {
                 Divider()
                 Button("Réinitialiser l’orientation") { model.resetOrientation() }
                 Divider()
-                Button(model.isToolbarVisible ? "Masquer les outils" : "Afficher les outils") { model.toggleToolbar() }
+                Button(model.isToolbarVisible ? NSLocalizedString("Masquer les outils", comment: "Image menu when controls are visible") : NSLocalizedString("Afficher les outils", comment: "Image menu when controls are hidden")) { model.toggleToolbar() }
             }
             CommandGroup(replacing: .help) {
                 Button("À propos de Hue") {
@@ -37,7 +37,7 @@ struct HueApp: App {
                         .applicationName: "Hue",
                         .applicationVersion: "1.0",
                         .version: "1",
-                        .credits: NSAttributedString(string: "Un visualiseur simple pour vos documents.\nCaméra • Rotation • Capture sur le Bureau")
+                        .credits: NSAttributedString(string: NSLocalizedString("Un visualiseur simple pour vos documents.\nCaméra • Rotation • Capture sur le Bureau", comment: "About panel description"))
                     ])
                 }
             }

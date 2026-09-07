@@ -18,11 +18,11 @@ enum ImagePipelineError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidImageExtent:
-            return "L’image de la caméra a des dimensions invalides."
+            return NSLocalizedString("L’image de la caméra a des dimensions invalides.", comment: "Image processing error")
         case .renderingFailed:
-            return "Impossible de préparer l’image de la caméra."
+            return NSLocalizedString("Impossible de préparer l’image de la caméra.", comment: "Image processing error")
         case .pngEncodingFailed:
-            return "Impossible de créer la capture PNG."
+            return NSLocalizedString("Impossible de créer la capture PNG.", comment: "Image processing error")
         }
     }
 }
