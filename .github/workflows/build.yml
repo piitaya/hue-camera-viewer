@@ -1,0 +1,88 @@
+name: Build and test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    name: macOS universal
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode with the macOS 26 SDK
+        shell: bash
+        run: |
+          for xcode in /Applications/Xcode_26*.app; do
+            if [[ -d "$xcode" ]]; then
+              sudo xcode-select --switch "$xcode/Contents/Developer"
+              break
+            fi
+          done
+          xcodebuild -version
+      - name: Build universal app
+        run: bash apps/macos/Scripts/build.sh
+      - name: Test
+        run: bash apps/macos/Scripts/test.sh
+
+  windows:
+    name: Windows ${{ matrix.runtime }}
+    runs-on: windows-2022
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        runtime: [win-x64, win-arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Test core logic
+        if: matrix.runtime == 'win-x64'
+        run: dotnet test apps/windows/Hue.Core.Tests --configuration Release
+      - name: Build self-contained app
+        shell: pwsh
+        run: ./apps/windows/Scripts/build.ps1 -Configuration Release -Runtime ${{ matrix.runtime }} -OutputDirectory "${{ github.workspace }}/artifacts/${{ matrix.runtime }}"
+      - name: Test the packaged app
+        if: matrix.runtime == 'win-x64'
+        shell: pwsh
+        run: |
+          $capturePath = Join-Path $env:RUNNER_TEMP 'hue-smoke'
+          New-Item -ItemType Directory -Force $capturePath | Out-Null
+          $appPath = Join-Path $env:GITHUB_WORKSPACE 'artifacts/win-x64/Hue.exe'
+          $process = Start-Process -FilePath $appPath -ArgumentList @('--smoke-test', '--capture-directory', ('"' + $capturePath + '"')) -PassThru
+          if (-not $process.WaitForExit(90000)) {
+            $process.Kill()
+            throw 'The app did not finish its smoke test.'
+          }
+          if ($process.ExitCode -ne 0) { throw "Smoke test failed with exit code $($process.ExitCode)." }
+          $resultPath = Join-Path $capturePath 'smoke-result.json'
+          if (-not (Test-Path $resultPath)) { throw 'The smoke test did not write its result.' }
+          Get-Content $resultPath
+      - name: Upload smoke test results
+        if: always() && matrix.runtime == 'win-x64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-smoke-test
+          path: ${{ runner.temp }}/hue-smoke
+          if-no-files-found: ignore
+      - name: Create preview ZIP
+        shell: pwsh
+        run: Compress-Archive -Path "artifacts/${{ matrix.runtime }}/*" -DestinationPath "artifacts/Hue-Windows-${{ matrix.runtime }}.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Hue-Windows-${{ matrix.runtime }}
+          path: artifacts/Hue-Windows-${{ matrix.runtime }}.zip
+          if-no-files-found: error
+          retention-days: 14
