@@ -1,0 +1,49 @@
+HUE 1.0 — Visualiseur de documents
+Mac Apple Silicon (M1, M2, M3…) • macOS 26 ou ultérieur
+
+INSTALLATION
+1. Ouvrez Hue-1.0-AppleSilicon.dmg.
+2. Glissez Hue dans Applications, puis éjectez l’image disque.
+3. Ouvrez Hue depuis Applications.
+4. Autorisez l’accès à la caméra. À la première capture, autorisez l’accès au Bureau si macOS le demande.
+
+Cette version personnelle utilise une signature locale et n’est pas notariée par Apple.
+Si macOS bloque son ouverture : tentez de l’ouvrir une fois, puis allez dans
+Réglages Système > Confidentialité et sécurité > Ouvrir quand même pour Hue.
+Il n’est pas nécessaire de désactiver les protections générales de macOS.
+
+UTILISATION
+Branchez la caméra HUE. Elle est sélectionnée en priorité au démarrage.
+Le flux occupe la fenêtre et conserve ses proportions, sans recadrage.
+Le bouton vert standard de macOS permet de passer en plein écran.
+Le dock Liquid Glass regroupe toutes les commandes :
+- choix de la caméra, via l’icône vidéo ;
+- rotation à droite et à gauche par pas de 90° ;
+- capture PNG sur le Bureau, via le bouton de capture.
+Survolez un bouton pour afficher son nom.
+Glissez la poignée du dock vers le bord souhaité. Une silhouette indique où le dock
+sera aimanté ; relâchez pour le placer. Il devient horizontal en haut ou en bas,
+et vertical à gauche ou à droite.
+Le chevron du dock masque les outils. Un petit chevron reste sur le bord choisi pour les réafficher.
+L’image enregistrée inclut exactement l’orientation de l’aperçu, à sa résolution native.
+Chaque capture reçoit un nom unique commençant par Capture_, suivi de la date et de l’heure.
+L’orientation, la position et la visibilité du dock sont mémorisées entre deux ouvertures.
+Le choix de caméra est également mémorisé ; une HUE disponible reste prioritaire au démarrage.
+Aucun raccourci clavier personnalisé : tout se commande à la souris.
+
+EN CAS DE PROBLÈME
+Caméra absente : vérifiez le câble/adaptateur USB et le menu des caméras.
+Caméra indisponible : fermez HUE Intuition ou toute application qui monopolise la caméra,
+puis utilisez Réessayer ou Actualiser les caméras.
+Accès refusé : Réglages Système > Confidentialité et sécurité > Caméra > Hue.
+Capture refusée : même rubrique, puis Fichiers et dossiers > Hue > Dossier Bureau.
+
+FONCTIONNEMENT
+Hue fonctionne en local, sans compte ni serveur. Aucun son n’est enregistré.
+Les captures restent dans le dossier Bureau choisi par macOS ; si votre Bureau est
+synchronisé avec iCloud, vos réglages habituels de synchronisation s’appliquent.
+La caméra HUE réelle doit encore être validée sur votre installation.
+
+CODE SOURCE
+L’archive Hue-source.zip contient les sources Swift et les scripts de compilation.
+Consultez README.md dans cette archive pour construire l’application.

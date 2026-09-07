@@ -1,0 +1,494 @@
+import AppKit
+import AVFoundation
+import Combine
+import CoreImage
+
+struct CameraChoice: Identifiable, Equatable {
+    let id: String
+    let name: String
+    let isHUE: Bool
+}
+
+enum CameraState: Equatable {
+    case idle, requestingPermission, starting, running, noCamera, denied
+    case failed(String)
+}
+
+/// Frame updates are observed only by the preview, independently of controls.
+final class CameraFrames: ObservableObject {
+    @Published fileprivate(set) var image: CGImage?
+}
+
+/// Public methods and published values belong to the main thread. Capture and
+/// image conversion have separate serial queues; the lock protects their handoff.
+final class CameraEngine: NSObject, ObservableObject {
+    @Published private(set) var devices: [CameraChoice] = []
+    @Published private(set) var selectedDeviceID: String?
+    let frames = CameraFrames()
+    var image: CGImage? { frames.image }
+    @Published private(set) var isTransforming = false
+    @Published private(set) var state: CameraState = .idle
+    @Published private(set) var resolution = ""
+
+    private let demo: Bool
+    private let session = AVCaptureSession()
+    private let sessionQueue = DispatchQueue(label: "fr.hue.camera.session", qos: .userInitiated)
+    private let frameQueue = DispatchQueue(label: "fr.hue.camera.frames", qos: .userInitiated)
+    private let processor = ImageProcessor()
+    private let lock = NSLock()
+    private var observers: [NSObjectProtocol] = []
+
+    // Main-thread control state.
+    private var wantsRunning = false
+    private var permissionRequestInFlight = false
+    private var cameraEpoch = 0
+    private var orientationRevision = 0
+
+    private struct Frame {
+        let image: CGImage
+        let epoch: Int
+        let revision: Int
+    }
+
+    // Every access to the following state is protected by lock.
+    private var epoch = 0
+    private var revision = 0
+    private var orientation = ImageOrientation()
+    private var acceptsFrames = false
+    private var activeOutput: ObjectIdentifier?
+    private var latestRawImage: CIImage?
+    private var nextFrameTime = 0.0
+    private var pendingFrame: Frame?
+    private var deliveryScheduled = false
+
+    init(demo: Bool = false) {
+        self.demo = demo
+        super.init()
+        guard !demo else { return }
+        let center = NotificationCenter.default
+        for name in [AVCaptureDevice.wasConnectedNotification, AVCaptureDevice.wasDisconnectedNotification] {
+            observers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                self?.devicesChanged()
+            })
+        }
+        observers.append(center.addObserver(forName: AVCaptureSession.runtimeErrorNotification,
+                                             object: session, queue: .main) { [weak self] note in
+            guard let self, self.wantsRunning else { return }
+            let error = note.userInfo?[AVCaptureSessionErrorKey] as? NSError
+            if error?.code == AVError.deviceWasDisconnected.rawValue || error?.code == AVError.deviceNotConnected.rawValue {
+                _ = self.refreshDevices()
+                self.suspend(.noCamera)
+            } else {
+                self.suspend(.failed(error?.localizedDescription ?? "La caméra n’a pas pu démarrer. Débranchez-la puis rebranchez-la."))
+            }
+        })
+        observers.append(center.addObserver(forName: AVCaptureSession.wasInterruptedNotification,
+                                             object: session, queue: .main) { [weak self] _ in
+            guard let self, self.wantsRunning else { return }
+            self.suspend(.failed("La caméra est momentanément indisponible. Fermez les autres applications qui l’utilisent."))
+        })
+        observers.append(center.addObserver(forName: AVCaptureSession.interruptionEndedNotification,
+                                             object: session, queue: .main) { [weak self] _ in
+            guard let self, self.wantsRunning else { return }
+            self.resumeSelectedCamera()
+        })
+    }
+
+    deinit {
+        observers.forEach(NotificationCenter.default.removeObserver)
+        let captureSession = session
+        sessionQueue.async { if captureSession.isRunning { captureSession.stopRunning() } }
+    }
+
+    func start() {
+        precondition(Thread.isMainThread)
+        guard !wantsRunning else { return }
+        wantsRunning = true
+        if demo {
+            startDemo()
+            return
+        }
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            resumeSelectedCamera(preferHUE: true)
+        case .notDetermined:
+            state = .requestingPermission
+            guard !permissionRequestInFlight else { return }
+            permissionRequestInFlight = true
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    self.permissionRequestInFlight = false
+                    guard self.wantsRunning else { return }
+                    if granted { self.resumeSelectedCamera(preferHUE: true) }
+                    else { self.suspend(.denied) }
+                }
+            }
+        case .denied, .restricted:
+            suspend(.denied)
+        @unknown default:
+            suspend(.denied)
+        }
+    }
+
+    func stop() {
+        precondition(Thread.isMainThread)
+        wantsRunning = false
+        suspend(.idle)
+    }
+
+    func retry() {
+        precondition(Thread.isMainThread)
+        stop()
+        start()
+    }
+
+    func selectCamera(id: String) {
+        precondition(Thread.isMainThread)
+        guard !demo, wantsRunning, AVCaptureDevice.authorizationStatus(for: .video) == .authorized else { return }
+        selectedDeviceID = id
+        UserDefaults.standard.set(id, forKey: "hue.cameraID")
+        resumeSelectedCamera()
+    }
+
+    func setOrientation(_ newOrientation: ImageOrientation) {
+        precondition(Thread.isMainThread)
+        orientationRevision += 1
+        lock.lock()
+        orientation = newOrientation
+        revision = orientationRevision
+        pendingFrame = nil
+        nextFrameTime = 0
+        let raw = latestRawImage
+        let currentEpoch = epoch
+        let currentRevision = revision
+        let enabled = acceptsFrames
+        lock.unlock()
+        guard enabled, let raw else { return }
+        isTransforming = true
+        frameQueue.async { [weak self] in
+            self?.render(raw, orientation: newOrientation, epoch: currentEpoch, revision: currentRevision)
+        }
+    }
+
+    private func discoverDevices() -> [AVCaptureDevice] {
+        let found = AVCaptureDevice.DiscoverySession(deviceTypes: [.external, .builtInWideAngleCamera],
+                                                     mediaType: .video, position: .unspecified).devices
+        return found.sorted {
+            let lhs = Self.isHUE($0), rhs = Self.isHUE($1)
+            if lhs != rhs { return lhs }
+            return $0.localizedName.localizedStandardCompare($1.localizedName) == .orderedAscending
+        }
+    }
+
+    private static func isHUE(_ device: AVCaptureDevice) -> Bool {
+        device.localizedName.range(of: "hue", options: .caseInsensitive) != nil
+    }
+
+    private func refreshDevices() -> [AVCaptureDevice] {
+        let found = discoverDevices()
+        devices = found.map { CameraChoice(id: $0.uniqueID, name: $0.localizedName, isHUE: Self.isHUE($0)) }
+        return found
+    }
+
+    private func devicesChanged() {
+        guard wantsRunning, AVCaptureDevice.authorizationStatus(for: .video) == .authorized else { return }
+        let found = refreshDevices()
+        // A disconnected selection remains selected. Reconnecting that device
+        // resumes it, but an absent document camera never turns on the face camera.
+        if let selectedDeviceID, !found.contains(where: { $0.uniqueID == selectedDeviceID }) {
+            if let hue = found.first(where: Self.isHUE) { beginCamera(hue) }
+            else { suspend(.noCamera) }
+            return
+        }
+        if let hue = found.first(where: Self.isHUE), hue.uniqueID != selectedDeviceID {
+            beginCamera(hue)
+        } else if (state != .running && state != .starting) || selectedDeviceID == nil {
+            resumeSelectedCamera()
+        }
+    }
+
+    private func resumeSelectedCamera(preferHUE: Bool = false) {
+        guard wantsRunning else { return }
+        let found = refreshDevices()
+        let rememberedID = UserDefaults.standard.string(forKey: "hue.cameraID")
+        let chosen: AVCaptureDevice?
+        if preferHUE, let hue = found.first(where: Self.isHUE) {
+            chosen = hue
+        } else if let selectedDeviceID {
+            chosen = found.first { $0.uniqueID == selectedDeviceID }
+        } else {
+            chosen = found.first(where: Self.isHUE)
+                ?? found.first { $0.uniqueID == rememberedID }
+                ?? found.first { $0.deviceType == .external }
+                ?? found.first
+        }
+        guard let chosen else {
+            suspend(.noCamera)
+            return
+        }
+        beginCamera(chosen)
+    }
+
+    private func invalidateFrames() {
+        cameraEpoch += 1
+        lock.lock()
+        epoch = cameraEpoch
+        acceptsFrames = false
+        activeOutput = nil
+        latestRawImage = nil
+        pendingFrame = nil
+        nextFrameTime = 0
+        lock.unlock()
+        frames.image = nil
+        isTransforming = false
+        resolution = ""
+    }
+
+    private func suspend(_ newState: CameraState) {
+        invalidateFrames()
+        state = newState
+        sessionQueue.async { [weak self] in
+            guard let self else { return }
+            if self.session.isRunning { self.session.stopRunning() }
+        }
+    }
+
+    private func beginCamera(_ device: AVCaptureDevice) {
+        invalidateFrames()
+        selectedDeviceID = device.uniqueID
+        UserDefaults.standard.set(device.uniqueID, forKey: "hue.cameraID")
+        state = .starting
+        let currentEpoch = cameraEpoch
+        DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
+            guard let self, self.wantsRunning, self.cameraEpoch == currentEpoch, self.state == .starting else { return }
+            self.suspend(.failed("La caméra n’envoie aucune image. Vérifiez le câble USB et fermez les applications qui l’utilisent."))
+        }
+        sessionQueue.async { [weak self] in
+            guard let self, self.isCurrent(currentEpoch) else { return }
+            do {
+                try self.configureSession(device: device, epoch: currentEpoch)
+                guard self.isCurrent(currentEpoch) else { return }
+                self.session.startRunning()
+                if !self.session.isRunning {
+                    self.reportFailure("La caméra ne répond pas. Vérifiez son branchement et fermez les applications qui l’utilisent.", epoch: currentEpoch)
+                }
+            } catch {
+                self.reportFailure(error.localizedDescription, epoch: currentEpoch)
+            }
+        }
+    }
+
+    private func isCurrent(_ expectedEpoch: Int) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return epoch == expectedEpoch
+    }
+
+    private func configureSession(device: AVCaptureDevice, epoch expectedEpoch: Int) throws {
+        if session.isRunning { session.stopRunning() }
+        session.beginConfiguration()
+        defer { session.commitConfiguration() }
+        session.inputs.forEach { session.removeInput($0) }
+        session.outputs.forEach { session.removeOutput($0) }
+        let input = try AVCaptureDeviceInput(device: device)
+        guard session.canAddInput(input) else { throw cameraError("Cette caméra ne peut pas être ouverte.") }
+        session.addInput(input)
+        if session.canSetSessionPreset(.high) { session.sessionPreset = .high }
+
+        try device.lockForConfiguration()
+        defer { device.unlockForConfiguration() }
+        if let format = device.formats.filter({ !$0.videoSupportedFrameRateRanges.isEmpty }).max(by: {
+            let a = CMVideoFormatDescriptionGetDimensions($0.formatDescription)
+            let b = CMVideoFormatDescriptionGetDimensions($1.formatDescription)
+            return Int64(a.width) * Int64(a.height) < Int64(b.width) * Int64(b.height)
+        }) {
+            device.activeFormat = format
+            // The output is always capped at 30 fps; also cap the device when
+            // its native format supports that rate, to reduce unnecessary work.
+            if format.videoSupportedFrameRateRanges.contains(where: { $0.minFrameRate <= 30 && $0.maxFrameRate >= 30 }) {
+                device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 30)
+            }
+        }
+
+        let output = AVCaptureVideoDataOutput()
+        output.alwaysDiscardsLateVideoFrames = true
+        output.setSampleBufferDelegate(self, queue: frameQueue)
+        guard session.canAddOutput(output) else { throw cameraError("Le flux vidéo de cette caméra n’est pas disponible.") }
+        session.addOutput(output)
+        if let connection = output.connection(with: .video) {
+            if connection.isVideoMirroringSupported {
+                connection.automaticallyAdjustsVideoMirroring = false
+                connection.isVideoMirrored = false
+            }
+            if connection.isVideoRotationAngleSupported(0) { connection.videoRotationAngle = 0 }
+        }
+        let dimensions = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
+        // Explicit native dimensions prevent the session preset from choosing
+        // a smaller preview buffer on macOS.
+        output.videoSettings = [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+            kCVPixelBufferWidthKey as String: Int(dimensions.width),
+            kCVPixelBufferHeightKey as String: Int(dimensions.height)
+        ]
+        lock.lock()
+        if epoch == expectedEpoch {
+            activeOutput = ObjectIdentifier(output)
+            acceptsFrames = true
+        }
+        lock.unlock()
+    }
+
+    private func cameraError(_ message: String) -> NSError {
+        NSError(domain: "fr.hue.camera", code: 1, userInfo: [NSLocalizedDescriptionKey: message])
+    }
+
+    private func reportFailure(_ message: String, epoch expectedEpoch: Int) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.wantsRunning, self.cameraEpoch == expectedEpoch else { return }
+            self.suspend(.failed(message))
+        }
+    }
+
+    private func render(_ raw: CIImage, orientation: ImageOrientation, epoch: Int, revision: Int) {
+        lock.lock()
+        let isCurrent = acceptsFrames && self.epoch == epoch && self.revision == revision
+        lock.unlock()
+        guard isCurrent else { return }
+        autoreleasepool {
+            do {
+                let rendered = try processor.render(raw, orientation: orientation)
+                lock.lock()
+                guard acceptsFrames, self.epoch == epoch, self.revision == revision else {
+                    lock.unlock()
+                    return
+                }
+                pendingFrame = Frame(image: rendered, epoch: epoch, revision: revision)
+                let shouldSchedule = !deliveryScheduled
+                deliveryScheduled = true
+                lock.unlock()
+                if shouldSchedule {
+                    DispatchQueue.main.async { [weak self] in self?.deliverLatestFrame() }
+                }
+            } catch {
+                reportFailure("L’image de la caméra ne peut pas être affichée : \(error.localizedDescription)", epoch: epoch)
+            }
+        }
+    }
+
+    private func deliverLatestFrame() {
+        lock.lock()
+        let frame = pendingFrame
+        pendingFrame = nil
+        deliveryScheduled = false
+        lock.unlock()
+        guard wantsRunning, let frame, cameraEpoch == frame.epoch, orientationRevision == frame.revision else { return }
+        frames.image = frame.image
+        if isTransforming { isTransforming = false }
+        let size = "\(frame.image.width) × \(frame.image.height)"
+        if resolution != size { resolution = size }
+        if state != .running { state = .running }
+    }
+
+    private func startDemo() {
+        invalidateFrames()
+        let raw = CIImage(cgImage: Self.demoDocument())
+        devices = [CameraChoice(id: "demo", name: "HUE HD Pro · Démonstration", isHUE: true)]
+        selectedDeviceID = "demo"
+        state = .starting
+        lock.lock()
+        acceptsFrames = true
+        latestRawImage = raw
+        let currentOrientation = orientation
+        let currentEpoch = epoch
+        let currentRevision = revision
+        lock.unlock()
+        frameQueue.async { [weak self] in
+            self?.render(raw, orientation: currentOrientation, epoch: currentEpoch, revision: currentRevision)
+        }
+    }
+
+    private static func demoDocument() -> CGImage {
+        let size = NSSize(width: 1600, height: 1200)
+        let picture = NSImage(size: size, flipped: false) { rect in
+            NSColor(calibratedRed: 0.83, green: 0.81, blue: 0.75, alpha: 1).setFill()
+            rect.fill()
+            let paper = NSRect(x: 195, y: 85, width: 1190, height: 1040)
+            NSGraphicsContext.saveGraphicsState()
+            let shadow = NSShadow()
+            shadow.shadowColor = NSColor.black.withAlphaComponent(0.17)
+            shadow.shadowBlurRadius = 28
+            shadow.shadowOffset = NSSize(width: 8, height: -8)
+            shadow.set()
+            NSColor(calibratedRed: 1, green: 0.99, blue: 0.95, alpha: 1).setFill()
+            NSBezierPath(roundedRect: paper, xRadius: 3, yRadius: 3).fill()
+            NSGraphicsContext.restoreGraphicsState()
+            let ink = NSColor(calibratedRed: 0.12, green: 0.20, blue: 0.24, alpha: 1)
+            func text(_ value: String, x: CGFloat, y: CGFloat, size: CGFloat, weight: NSFont.Weight = .regular, color: NSColor? = nil) {
+                (value as NSString).draw(at: NSPoint(x: x, y: y), withAttributes: [
+                    .font: NSFont.systemFont(ofSize: size, weight: weight),
+                    .foregroundColor: color ?? ink
+                ])
+            }
+            text("LE PETIT ATELIER", x: 295, y: 1000, size: 24, weight: .semibold,
+                 color: NSColor(calibratedRed: 0.21, green: 0.48, blue: 0.40, alpha: 1))
+            text("À la découverte des formes", x: 295, y: 915, size: 52, weight: .bold)
+            text("Observe, compare et dessine.", x: 295, y: 859, size: 28)
+            let colors: [NSColor] = [
+                NSColor(calibratedRed: 0.34, green: 0.64, blue: 0.52, alpha: 1),
+                NSColor(calibratedRed: 0.94, green: 0.66, blue: 0.27, alpha: 1),
+                NSColor(calibratedRed: 0.40, green: 0.60, blue: 0.79, alpha: 1)
+            ]
+            colors[0].setFill()
+            NSBezierPath(ovalIn: NSRect(x: 320, y: 530, width: 215, height: 215)).fill()
+            colors[1].setFill()
+            let triangle = NSBezierPath()
+            triangle.move(to: NSPoint(x: 675, y: 530))
+            triangle.line(to: NSPoint(x: 905, y: 530))
+            triangle.line(to: NSPoint(x: 790, y: 745))
+            triangle.close()
+            triangle.fill()
+            colors[2].setFill()
+            NSBezierPath(roundedRect: NSRect(x: 1050, y: 530, width: 200, height: 200), xRadius: 5, yRadius: 5).fill()
+            text("un cercle", x: 354, y: 473, size: 28, weight: .medium)
+            text("un triangle", x: 711, y: 473, size: 28, weight: .medium)
+            text("un carré", x: 1091, y: 473, size: 28, weight: .medium)
+            text("À toi de jouer !", x: 295, y: 359, size: 32, weight: .semibold)
+            NSColor(calibratedRed: 0.80, green: 0.83, blue: 0.81, alpha: 1).setStroke()
+            for y in stride(from: 190, through: 295, by: 52) {
+                let line = NSBezierPath()
+                line.move(to: NSPoint(x: 295, y: y))
+                line.line(to: NSPoint(x: 1295, y: y))
+                line.lineWidth = 1.5
+                line.stroke()
+            }
+            return true
+        }
+        return picture.cgImage(forProposedRect: nil, context: nil, hints: nil)!
+    }
+}
+
+extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate {
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        let raw = CIImage(cvPixelBuffer: pixelBuffer)
+        let timestamp = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
+        let now = timestamp.isFinite ? timestamp : ProcessInfo.processInfo.systemUptime
+        lock.lock()
+        guard acceptsFrames, activeOutput == ObjectIdentifier(output) else {
+            lock.unlock()
+            return
+        }
+        latestRawImage = raw
+        guard now + 0.00001 >= nextFrameTime else {
+            lock.unlock()
+            return
+        }
+        nextFrameTime = nextFrameTime == 0 ? now + 1.0 / 30.0 : max(nextFrameTime + 1.0 / 30.0, now)
+        let currentOrientation = orientation
+        let currentEpoch = epoch
+        let currentRevision = revision
+        lock.unlock()
+        render(raw, orientation: currentOrientation, epoch: currentEpoch, revision: currentRevision)
+    }
+}

@@ -1,0 +1,21 @@
+# Build products and local packaging tools
+/build/
+/.build/
+/.swiftpm/
+/.venv-dmg/
+*.app/
+*.dmg
+*.zip
+
+# Editor, Finder, and Python caches
+.DS_Store
+xcuserdata/
+__pycache__/
+*.py[cod]
+
+# Local signing credentials and environment overrides
+.env
+.env.*
+*.p12
+*.p8
+*.key
