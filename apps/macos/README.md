@@ -1,5 +1,7 @@
 # Hue Camera Viewer for macOS
 
+> Independent project, not affiliated with HUE. This app is compatible with HUE cameras.
+
 A minimal macOS app for HUE and USB document cameras: live preview, 90° rotation,
 and PNG capture to the Desktop, with a movable, collapsible dock.
 

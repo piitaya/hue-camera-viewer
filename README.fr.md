@@ -1,5 +1,7 @@
 # Hue Camera Viewer
 
+> Projet indépendant, non affilié à HUE. Cette application est compatible avec les caméras HUE.
+
 [English](README.md) | **Français**
 
 Une application simple pour les caméras de documents HUE et USB : affichage en direct,
