@@ -114,13 +114,6 @@ jobs:
             if ($process.ExitCode -ne 0) { throw "Uninstall failed with exit code $($process.ExitCode)." }
             if (Test-Path (Join-Path $installPath 'Hue.exe')) { throw 'Uninstall left the app executable behind.' }
           }
-      - name: Upload smoke test results
-        if: always() && matrix.runtime == 'win-x64'
-        uses: actions/upload-artifact@v4
-        with:
-          name: Windows-smoke-test
-          path: ${{ runner.temp }}/hue-smoke
-          if-no-files-found: ignore
       - name: Create preview ZIP
         shell: pwsh
         run: Compress-Archive -Path "artifacts/${{ matrix.runtime }}/*" -DestinationPath "artifacts/Hue-Windows-${{ matrix.runtime }}.zip"
