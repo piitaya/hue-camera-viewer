@@ -79,13 +79,13 @@ final class CameraEngine: NSObject, ObservableObject {
                 _ = self.refreshDevices()
                 self.suspend(.noCamera)
             } else {
-                self.suspend(.failed(error?.localizedDescription ?? NSLocalizedString("La caméra n’a pas pu démarrer. Débranchez-la puis rebranchez-la.", comment: "Camera error")))
+                self.suspend(.failed(error?.localizedDescription ?? NSLocalizedString("The camera could not start. Unplug it, then plug it back in.", comment: "Camera error")))
             }
         })
         observers.append(center.addObserver(forName: AVCaptureSession.wasInterruptedNotification,
                                              object: session, queue: .main) { [weak self] _ in
             guard let self, self.wantsRunning else { return }
-            self.suspend(.failed(NSLocalizedString("La caméra est momentanément indisponible. Fermez les autres applications qui l’utilisent.", comment: "Camera error")))
+            self.suspend(.failed(NSLocalizedString("The camera is temporarily unavailable. Close other apps that are using it.", comment: "Camera error")))
         })
         observers.append(center.addObserver(forName: AVCaptureSession.interruptionEndedNotification,
                                              object: session, queue: .main) { [weak self] _ in
@@ -267,7 +267,7 @@ final class CameraEngine: NSObject, ObservableObject {
         let currentEpoch = cameraEpoch
         DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
             guard let self, self.wantsRunning, self.cameraEpoch == currentEpoch, self.state == .starting else { return }
-            self.suspend(.failed(NSLocalizedString("La caméra n’envoie aucune image. Vérifiez le câble USB et fermez les applications qui l’utilisent.", comment: "Camera error")))
+            self.suspend(.failed(NSLocalizedString("The camera is not sending any images. Check the USB cable and close other apps that are using it.", comment: "Camera error")))
         }
         sessionQueue.async { [weak self] in
             guard let self, self.isCurrent(currentEpoch) else { return }
@@ -276,7 +276,7 @@ final class CameraEngine: NSObject, ObservableObject {
                 guard self.isCurrent(currentEpoch) else { return }
                 self.session.startRunning()
                 if !self.session.isRunning {
-                    self.reportFailure(NSLocalizedString("La caméra ne répond pas. Vérifiez son branchement et fermez les applications qui l’utilisent.", comment: "Camera error"), epoch: currentEpoch)
+                    self.reportFailure(NSLocalizedString("The camera is not responding. Check its connection and close other apps that are using it.", comment: "Camera error"), epoch: currentEpoch)
                 }
             } catch {
                 self.reportFailure(error.localizedDescription, epoch: currentEpoch)
@@ -297,7 +297,7 @@ final class CameraEngine: NSObject, ObservableObject {
         session.inputs.forEach { session.removeInput($0) }
         session.outputs.forEach { session.removeOutput($0) }
         let input = try AVCaptureDeviceInput(device: device)
-        guard session.canAddInput(input) else { throw cameraError(NSLocalizedString("Cette caméra ne peut pas être ouverte.", comment: "Camera error")) }
+        guard session.canAddInput(input) else { throw cameraError(NSLocalizedString("This camera could not be opened.", comment: "Camera error")) }
         session.addInput(input)
         if session.canSetSessionPreset(.high) { session.sessionPreset = .high }
 
@@ -319,7 +319,7 @@ final class CameraEngine: NSObject, ObservableObject {
         let output = AVCaptureVideoDataOutput()
         output.alwaysDiscardsLateVideoFrames = true
         output.setSampleBufferDelegate(self, queue: frameQueue)
-        guard session.canAddOutput(output) else { throw cameraError(NSLocalizedString("Le flux vidéo de cette caméra n’est pas disponible.", comment: "Camera error")) }
+        guard session.canAddOutput(output) else { throw cameraError(NSLocalizedString("This camera’s video stream is unavailable.", comment: "Camera error")) }
         session.addOutput(output)
         if let connection = output.connection(with: .video) {
             if connection.isVideoMirroringSupported {
@@ -378,7 +378,7 @@ final class CameraEngine: NSObject, ObservableObject {
                     DispatchQueue.main.async { [weak self] in self?.deliverLatestFrame() }
                 }
             } catch {
-                reportFailure(String(format: NSLocalizedString("L’image de la caméra ne peut pas être affichée : %@", comment: "Camera render failure followed by the system error"), error.localizedDescription), epoch: epoch)
+                reportFailure(String(format: NSLocalizedString("The camera image could not be displayed: %@", comment: "Camera render failure followed by the system error"), error.localizedDescription), epoch: epoch)
             }
         }
     }

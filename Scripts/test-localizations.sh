@@ -34,3 +34,8 @@ for language in en fr; do
     /usr/bin/arch "-$TEST_ARCH" "$LOCALIZATION_APP/Contents/MacOS/HueLocalizationTests" "$PROJECT_DIR/Resources" "$language" \
         -AppleLanguages "($language)"
 done
+
+# An unsupported language must load the English development localization.
+/usr/bin/arch "-$TEST_ARCH" "$LOCALIZATION_APP/Contents/MacOS/HueLocalizationTests" "$PROJECT_DIR/Resources" en \
+    -AppleLanguages '(de)'
+echo "PASS: unsupported language (de) falls back to English."

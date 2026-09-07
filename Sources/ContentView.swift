@@ -39,14 +39,14 @@ struct ContentView: View {
                             .overlay(Capsule().strokeBorder(.primary.opacity(0.10)))
                     }
                     .buttonStyle(.plain)
-                    .help("Afficher la capture dans le Finder")
+                    .help("Show Capture in Finder")
                     .padding(.bottom, model.dockEdge == .bottom ? (model.isToolbarVisible ? 92 : 50) : 20)
                     .transition(.opacity)
                 }
             }
             .overlay(alignment: .bottomLeading) {
                 if model.isDemo {
-                    Text("Démonstration")
+                    Text("Demo")
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.white.opacity(0.42))
                         .padding(16)
@@ -56,7 +56,7 @@ struct ContentView: View {
         }
         .background(stageColor)
         .tint(dockAccent)
-        .alert("Enregistrement impossible", isPresented: Binding(
+        .alert("Unable to Save", isPresented: Binding(
             get: { model.errorMessage != nil },
             set: { if !$0 { model.errorMessage = nil } }
         )) {
@@ -128,11 +128,11 @@ struct ContentView: View {
             dragHandle(for: edge, in: size)
             cameraMenu
             dockDivider(for: edge)
-            DockButton("Tourner à droite", symbol: "rotate.right") { model.rotate(1) }
-            DockButton("Tourner à gauche", symbol: "rotate.left") { model.rotate(-1) }
+            DockButton("Rotate Right", symbol: "rotate.right") { model.rotate(1) }
+            DockButton("Rotate Left", symbol: "rotate.left") { model.rotate(-1) }
             dockDivider(for: edge)
             captureButton
-            DockButton("Masquer les commandes", symbol: chevron(for: edge, inward: false), size: 30, iconSize: 12) {
+            DockButton("Hide Controls", symbol: chevron(for: edge, inward: false), size: 30, iconSize: 12) {
                 model.toggleToolbar()
             }
         }
@@ -165,13 +165,13 @@ struct ContentView: View {
                 gripHovered = hovering
                 if hovering { NSCursor.openHand.set() } else { NSCursor.arrow.set() }
             }
-            .help("Déplacer les commandes")
+            .help("Move Controls")
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Déplacer les commandes")
-            .accessibilityAction(named: Text("Placer à gauche")) { moveDock(to: .left) }
-            .accessibilityAction(named: Text("Placer à droite")) { moveDock(to: .right) }
-            .accessibilityAction(named: Text("Placer en haut")) { moveDock(to: .top) }
-            .accessibilityAction(named: Text("Placer en bas")) { moveDock(to: .bottom) }
+            .accessibilityLabel("Move Controls")
+            .accessibilityAction(named: Text("Move to Left Edge")) { moveDock(to: .left) }
+            .accessibilityAction(named: Text("Move to Right Edge")) { moveDock(to: .right) }
+            .accessibilityAction(named: Text("Move to Top Edge")) { moveDock(to: .top) }
+            .accessibilityAction(named: Text("Move to Bottom Edge")) { moveDock(to: .bottom) }
     }
 
     private func dockDrag(in size: CGSize) -> some Gesture {
@@ -218,7 +218,7 @@ struct ContentView: View {
 
     private var cameraMenu: some View {
         Menu {
-            if camera.devices.isEmpty { Text("Aucune caméra disponible") }
+            if camera.devices.isEmpty { Text("No cameras available") }
             ForEach(camera.devices) { device in
                 Button {
                     camera.selectCamera(id: device.id)
@@ -231,7 +231,7 @@ struct ContentView: View {
                 }
             }
             Divider()
-            Button("Actualiser les caméras") { camera.retry() }
+            Button("Refresh Cameras") { camera.retry() }
         } label: {
             Text(" ").frame(width: 42, height: 42)
         }
@@ -251,13 +251,13 @@ struct ContentView: View {
             .allowsHitTesting(false)
             .accessibilityHidden(true)
         }
-        .help(String(format: NSLocalizedString("Choisir la caméra\n%@", comment: "Camera picker tooltip, including the selected camera name"), selectedCameraName))
-        .accessibilityLabel("Choisir la caméra")
+        .help(String(format: NSLocalizedString("Choose Camera\n%@", comment: "Camera picker tooltip, including the selected camera name"), selectedCameraName))
+        .accessibilityLabel("Choose Camera")
         .accessibilityValue(selectedCameraName)
     }
 
     private var selectedCameraName: String {
-        camera.devices.first { $0.id == camera.selectedDeviceID }?.name ?? NSLocalizedString("Aucune caméra sélectionnée", comment: "Fallback camera name")
+        camera.devices.first { $0.id == camera.selectedDeviceID }?.name ?? NSLocalizedString("No camera selected", comment: "Fallback camera name")
     }
 
     private var captureButton: some View {
@@ -277,8 +277,8 @@ struct ContentView: View {
         }
         .buttonStyle(.plain)
         .disabled(!model.canRequestCapture)
-        .help("Capturer l’image sur le Bureau")
-        .accessibilityLabel(model.isSaving ? NSLocalizedString("Enregistrement en cours", comment: "Capture button while saving") : NSLocalizedString("Capturer sur le Bureau", comment: "Capture button accessibility label"))
+        .help("Save a Capture to the Desktop")
+        .accessibilityLabel(model.isSaving ? NSLocalizedString("Saving", comment: "Capture button while saving") : NSLocalizedString("Capture to Desktop", comment: "Capture button accessibility label"))
     }
 
     private func showDockButton(for edge: DockEdge, size: CGSize) -> some View {
@@ -290,8 +290,8 @@ struct ContentView: View {
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .help("Afficher les commandes")
-        .accessibilityLabel("Afficher les commandes")
+        .help("Show Controls")
+        .accessibilityLabel("Show Controls")
     }
 
     private var emptyState: some View {
@@ -314,15 +314,15 @@ struct ContentView: View {
                 .multilineTextAlignment(.center)
                 .lineSpacing(3)
             if camera.state == .denied {
-                Button("Ouvrir les réglages") { model.openCameraPrivacy() }
+                Button("Open Settings") { model.openCameraPrivacy() }
                     .buttonStyle(.bordered)
                     .padding(.top, 5)
-                Button("Réessayer") { camera.retry() }
+                Button("Try Again") { camera.retry() }
                     .buttonStyle(.plain)
                     .font(.system(size: 12))
                     .foregroundStyle(.white.opacity(0.65))
             } else if case .failed = camera.state {
-                Button("Réessayer") { camera.retry() }
+                Button("Try Again") { camera.retry() }
                     .buttonStyle(.bordered)
                     .padding(.top, 5)
             }
@@ -331,25 +331,25 @@ struct ContentView: View {
 
     private var emptyTitle: String {
         switch camera.state {
-        case .idle, .noCamera: return NSLocalizedString("Branchez votre caméra", comment: "Camera empty state")
-        case .requestingPermission: return NSLocalizedString("Autorisez l’accès à la caméra", comment: "Camera empty state")
-        case .starting: return NSLocalizedString("La caméra démarre…", comment: "Camera empty state")
-        case .denied: return NSLocalizedString("L’accès à la caméra est désactivé", comment: "Camera empty state")
-        case .failed: return NSLocalizedString("La caméra est indisponible", comment: "Camera empty state")
-        case .running: return NSLocalizedString("Votre image arrive…", comment: "Camera empty state")
+        case .idle, .noCamera: return NSLocalizedString("Connect your camera", comment: "Camera empty state")
+        case .requestingPermission: return NSLocalizedString("Allow camera access", comment: "Camera empty state")
+        case .starting: return NSLocalizedString("Starting the camera…", comment: "Camera empty state")
+        case .denied: return NSLocalizedString("Camera access is disabled", comment: "Camera empty state")
+        case .failed: return NSLocalizedString("Camera unavailable", comment: "Camera empty state")
+        case .running: return NSLocalizedString("Waiting for an image…", comment: "Camera empty state")
         }
     }
 
     private var emptyMessage: String {
         switch camera.state {
         case .idle, .noCamera:
-            return NSLocalizedString("Connectez la HUE à un port USB de votre Mac.", comment: "Camera empty state")
+            return NSLocalizedString("Connect your HUE camera to a USB port on your Mac.", comment: "Camera empty state")
         case .requestingPermission:
-            return NSLocalizedString("Acceptez la demande de macOS pour afficher l’aperçu.", comment: "Camera empty state")
+            return NSLocalizedString("Allow access when macOS asks to show the preview.", comment: "Camera empty state")
         case .starting, .running:
-            return NSLocalizedString("Préparation de l’aperçu.", comment: "Camera empty state")
+            return NSLocalizedString("Preparing the preview.", comment: "Camera empty state")
         case .denied:
-            return NSLocalizedString("Activez Hue dans Réglages Système → Confidentialité et sécurité → Caméra.", comment: "Camera empty state")
+            return NSLocalizedString("Enable Hue in System Settings → Privacy & Security → Camera.", comment: "Camera empty state")
         case .failed(let message):
             return message
         }
@@ -381,7 +381,7 @@ private struct CameraImageView: View {
                 .resizable()
                 .interpolation(.high)
                 .aspectRatio(contentMode: .fit)
-                .accessibilityLabel("Aperçu de la caméra")
+                .accessibilityLabel("Camera Preview")
         } else {
             Color.clear
         }

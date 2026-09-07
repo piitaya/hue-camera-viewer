@@ -88,7 +88,7 @@ final class AppModel: ObservableObject {
         }
         guard let image = camera.image else { return }
         guard let directory = captureDirectory() else {
-            errorMessage = NSLocalizedString("Le dossier Bureau est introuvable.", comment: "Capture destination error")
+            errorMessage = NSLocalizedString("The Desktop folder could not be found.", comment: "Capture destination error")
             return
         }
         isSaving = true
@@ -106,9 +106,9 @@ final class AppModel: ObservableObject {
                 switch result {
                 case .success(let url):
                     self.lastCapture = url
-                    self.showNotice(self.isDemo ? NSLocalizedString("Capture de démonstration enregistrée", comment: "Successful demo capture") : NSLocalizedString("Capture enregistrée sur le Bureau", comment: "Successful capture"))
+                    self.showNotice(self.isDemo ? NSLocalizedString("Demo capture saved", comment: "Successful demo capture") : NSLocalizedString("Capture saved to the Desktop", comment: "Successful capture"))
                 case .failure(let error):
-                    self.errorMessage = String(format: NSLocalizedString("La capture n’a pas pu être enregistrée.\n\nVérifiez l’accès au Bureau dans Réglages Système → Confidentialité et sécurité → Fichiers et dossiers → Hue.\n\n%@", comment: "Capture failure followed by the system error"), error.localizedDescription)
+                    self.errorMessage = String(format: NSLocalizedString("The capture could not be saved.\n\nCheck Desktop access in System Settings → Privacy & Security → Files & Folders → Hue.\n\n%@", comment: "Capture failure followed by the system error"), error.localizedDescription)
                 }
             }
         }

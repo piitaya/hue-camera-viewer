@@ -18,26 +18,26 @@ struct HueApp: App {
         .commands {
             CommandGroup(replacing: .newItem) { }
             CommandGroup(replacing: .saveItem) {
-                Button("Capturer sur le Bureau") { model.capture() }
+                Button("Capture to Desktop") { model.capture() }
                     .disabled(!model.canRequestCapture)
-                Button("Afficher la dernière capture") { model.revealLastCapture() }
+                Button("Show Last Capture") { model.revealLastCapture() }
                     .disabled(model.lastCapture == nil)
             }
             CommandMenu("Image") {
-                Button("Tourner à gauche") { model.rotate(-1) }
-                Button("Tourner à droite") { model.rotate(1) }
+                Button("Rotate Left") { model.rotate(-1) }
+                Button("Rotate Right") { model.rotate(1) }
                 Divider()
-                Button("Réinitialiser l’orientation") { model.resetOrientation() }
+                Button("Reset Orientation") { model.resetOrientation() }
                 Divider()
-                Button(model.isToolbarVisible ? NSLocalizedString("Masquer les outils", comment: "Image menu when controls are visible") : NSLocalizedString("Afficher les outils", comment: "Image menu when controls are hidden")) { model.toggleToolbar() }
+                Button(model.isToolbarVisible ? NSLocalizedString("Hide Controls", comment: "Image menu when controls are visible") : NSLocalizedString("Show Controls", comment: "Image menu when controls are hidden")) { model.toggleToolbar() }
             }
             CommandGroup(replacing: .help) {
-                Button("À propos de Hue") {
+                Button("About Hue") {
                     NSApp.orderFrontStandardAboutPanel(options: [
                         .applicationName: "Hue",
                         .applicationVersion: "1.0",
                         .version: "1",
-                        .credits: NSAttributedString(string: NSLocalizedString("Un visualiseur simple pour vos documents.\nCaméra • Rotation • Capture sur le Bureau", comment: "About panel description"))
+                        .credits: NSAttributedString(string: NSLocalizedString("A simple viewer for your documents.\nCamera • Rotation • Capture to Desktop", comment: "About panel description"))
                     ])
                 }
             }

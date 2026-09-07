@@ -36,6 +36,8 @@ private struct LocalizationTests {
         let resources = URL(fileURLWithPath: args[1], isDirectory: true)
         let language = args[2]
         try require(["en", "fr"].contains(language), "Unsupported expected language")
+        try require(Bundle.main.infoDictionary?["CFBundleDevelopmentRegion"] as? String == "en",
+                    "The development and fallback language must be English")
         try require(Bundle.main.preferredLocalizations.first == language,
                     "macOS did not select the requested bundle language: \(Bundle.main.preferredLocalizations)")
 
@@ -44,17 +46,20 @@ private struct LocalizationTests {
             let english = try strings(at: resources.appendingPathComponent("en.lproj/\(table).strings"))
             try require(Set(french.keys) == Set(english.keys), "\(table): French/English keys differ")
             for key in french.keys.sorted() {
-                let source = french[key]!
-                let translated = english[key]!
+                let source = english[key]!
+                let translated = french[key]!
                 try require(!source.isEmpty && !translated.isEmpty, "Empty translation: \(key)")
                 let sourcePlaceholders = try placeholders(in: source)
                 let translatedPlaceholders = try placeholders(in: translated)
                 try require(sourcePlaceholders == translatedPlaceholders, "Mismatched placeholders: \(key)")
-                let expected = language == "en" ? translated : source
+                let expected = language == "en" ? source : translated
                 if table == "Localizable" {
+                    try require(key == source, "The English source string must be its own localization key: \(key)")
                     let actual = Bundle.main.localizedString(forKey: key, value: "MISSING TRANSLATION", table: table)
                     try require(actual == expected, "Bundled \(language) translation is missing or stale: \(key)")
                 } else {
+                    try require(Bundle.main.infoDictionary?[key] as? String == source,
+                                "Base Info.plist must contain the English value: \(key)")
                     try require(Bundle.main.object(forInfoDictionaryKey: key) as? String == expected,
                                 "Info.plist localization was not loaded: \(key)")
                 }
@@ -66,7 +71,7 @@ private struct LocalizationTests {
             ? "The PNG capture could not be created." : "Impossible de créer la capture PNG."
         try require(ImagePipelineError.pngEncodingFailed.localizedDescription == expectedPNGError,
                     "Image pipeline errors bypass localization")
-        let tooltip = String(format: NSLocalizedString("Choisir la caméra\n%@", comment: ""), "USB Camera")
+        let tooltip = String(format: NSLocalizedString("Choose Camera\n%@", comment: ""), "USB Camera")
         try require(tooltip == (language == "en" ? "Choose Camera\nUSB Camera" : "Choisir la caméra\nUSB Camera"),
                     "Camera tooltip lost its camera name or localization")
         print("PASS: \(language) bundle selection, all interface/permission strings, matching keys/placeholders, and localized image errors.")
