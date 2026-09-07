@@ -171,8 +171,13 @@ final class CameraEngine: NSObject, ObservableObject {
         }
     }
 
+    private static var externalCameraType: AVCaptureDevice.DeviceType {
+        if #available(macOS 14.0, *) { return .external }
+        return .externalUnknown
+    }
+
     private func discoverDevices() -> [AVCaptureDevice] {
-        let found = AVCaptureDevice.DiscoverySession(deviceTypes: [.external, .builtInWideAngleCamera],
+        let found = AVCaptureDevice.DiscoverySession(deviceTypes: [Self.externalCameraType, .builtInWideAngleCamera],
                                                      mediaType: .video, position: .unspecified).devices
         return found.sorted {
             let lhs = Self.isHUE($0), rhs = Self.isHUE($1)
@@ -220,7 +225,7 @@ final class CameraEngine: NSObject, ObservableObject {
         } else {
             chosen = found.first(where: Self.isHUE)
                 ?? found.first { $0.uniqueID == rememberedID }
-                ?? found.first { $0.deviceType == .external }
+                ?? found.first { $0.deviceType == Self.externalCameraType }
                 ?? found.first
         }
         guard let chosen else {
@@ -321,7 +326,9 @@ final class CameraEngine: NSObject, ObservableObject {
                 connection.automaticallyAdjustsVideoMirroring = false
                 connection.isVideoMirrored = false
             }
-            if connection.isVideoRotationAngleSupported(0) { connection.videoRotationAngle = 0 }
+            if #available(macOS 14.0, *), connection.isVideoRotationAngleSupported(0) {
+                connection.videoRotationAngle = 0
+            }
         }
         let dimensions = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
         // Explicit native dimensions prevent the session preset from choosing
