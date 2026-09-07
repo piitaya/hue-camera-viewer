@@ -1,0 +1,4 @@
+/* System permission prompts and About panel copyright. */
+"NSCameraUsageDescription" = "Hue uses your camera to display your documents and save captures to your Desktop.";
+"NSDesktopFolderUsageDescription" = "Hue saves your PNG captures directly to your Desktop.";
+"NSHumanReadableCopyright" = "Hue — Document Viewer";

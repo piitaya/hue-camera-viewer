@@ -2,8 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleDevelopmentRegion</key><string>fr</string>
-    <key>CFBundleLocalizations</key><array><string>fr</string></array>
+    <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleLocalizations</key><array><string>en</string><string>fr</string></array>
     <key>CFBundleDisplayName</key><string>Hue</string>
     <key>CFBundleName</key><string>Hue</string>
     <key>CFBundleExecutable</key><string>Hue</string>
@@ -16,8 +16,8 @@
     <key>LSApplicationCategoryType</key><string>public.app-category.education</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSPrincipalClass</key><string>NSApplication</string>
-    <key>NSCameraUsageDescription</key><string>Hue utilise votre caméra pour afficher vos documents et en capturer des images sur votre Bureau.</string>
-    <key>NSDesktopFolderUsageDescription</key><string>Hue enregistre vos captures PNG directement sur votre Bureau.</string>
-    <key>NSHumanReadableCopyright</key><string>Hue — Visualiseur de documents</string>
+    <key>NSCameraUsageDescription</key><string>Hue uses your camera to display your documents and save captures to your Desktop.</string>
+    <key>NSDesktopFolderUsageDescription</key><string>Hue saves your PNG captures directly to your Desktop.</string>
+    <key>NSHumanReadableCopyright</key><string>Hue — Document Viewer</string>
 </dict>
 </plist>
