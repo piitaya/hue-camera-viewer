@@ -12,9 +12,13 @@ and PNG capture to the Desktop, with a movable, collapsible dock.
 
 ## Install
 
+**[Download for macOS](https://github.com/piitaya/hue-camera-viewer/releases/download/v1.0.0-beta.1/Hue-Camera-Viewer-1.0-Universal.dmg)** · **[Download for Windows](https://github.com/piitaya/hue-camera-viewer/releases/download/v1.0.0-beta.1/Hue-Setup.exe)**
+
 On macOS, open the DMG and drag Hue to Applications.
 On Windows, run `Hue-Setup.exe`, then open Hue from the Start menu.
 Connect your camera and allow camera access when prompted.
+
+The Windows installer is unsigned and may trigger a Microsoft SmartScreen warning.
 
 ## Repository
 
