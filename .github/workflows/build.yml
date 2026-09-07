@@ -14,8 +14,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      macos: ${{ steps.platforms.outputs.macos }}
+      windows: ${{ steps.platforms.outputs.windows }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Select affected platforms
+        id: platforms
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: bash .github/scripts/changed-platforms.sh >> "$GITHUB_OUTPUT"
+
   macos:
     name: macOS universal
+    needs: changes
+    if: needs.changes.outputs.macos == 'true'
     runs-on: macos-15
     timeout-minutes: 20
     steps:
@@ -52,10 +72,12 @@ jobs:
           name: Hue-macOS-Universal-preview
           path: artifacts/Hue-macOS-Universal-preview.dmg
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 3
 
   windows:
     name: Windows
+    needs: changes
+    if: needs.changes.outputs.windows == 'true'
     runs-on: windows-2022
     timeout-minutes: 25
     steps:
@@ -119,4 +141,4 @@ jobs:
           name: Hue-Windows-preview
           path: artifacts/installers/Hue-Setup.exe
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 3

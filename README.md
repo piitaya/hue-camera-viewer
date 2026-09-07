@@ -22,6 +22,7 @@ Connect your camera and allow camera access when prompted.
 - `apps/windows`: C# app, tests, and Windows packaging.
 - `assets`: shared app icons.
 
-Pull requests build and test both apps. Download the macOS preview DMG or Windows preview
-installer from the completed workflow's artifacts.
+Pull requests and pushes to `main` build and test the affected apps, skipping documentation-only
+changes. Manual runs build both apps. Preview installers are available in the workflow's
+artifacts for three days.
 These CI builds are for testing; the macOS preview is not notarized.
