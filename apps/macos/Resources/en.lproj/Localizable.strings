@@ -12,7 +12,6 @@
 "Move to Top Edge" = "Move to Top Edge";
 "Move to Bottom Edge" = "Move to Bottom Edge";
 "No cameras available" = "No cameras available";
-"Refresh Cameras" = "Refresh Cameras";
 "Choose Camera\n%@" = "Choose Camera\n%@";
 "Choose Camera" = "Choose Camera";
 "No camera selected" = "No camera selected";
@@ -21,7 +20,6 @@
 "Capture to Desktop" = "Capture to Desktop";
 "Show Controls" = "Show Controls";
 "Open Settings" = "Open Settings";
-"Try Again" = "Try Again";
 "Connect your camera" = "Connect your camera";
 "Allow camera access" = "Allow camera access";
 "Starting the camera…" = "Starting the camera…";

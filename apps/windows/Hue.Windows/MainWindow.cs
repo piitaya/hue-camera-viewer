@@ -1,14 +1,18 @@
+using System.Diagnostics;
+using System.Numerics;
 using System.Text.Json;
 using Hue.Core;
 using Hue.Windows.Services;
 using Microsoft.UI;
+using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Shapes;
 using Windows.Foundation;
@@ -16,6 +20,7 @@ using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System;
+using Windows.UI.ViewManagement;
 using Path = System.IO.Path;
 
 namespace Hue.Windows;
@@ -55,7 +60,7 @@ internal sealed class MainWindow : Window
     private readonly Canvas _overlay = new();
     private readonly Border _dock = new()
     {
-        Padding = new Thickness(8), CornerRadius = new CornerRadius(30), BorderThickness = new Thickness(1)
+        CornerRadius = new CornerRadius(31), BorderThickness = new Thickness(1)
     };
     private readonly Border _snapPreview = new()
     {
@@ -64,7 +69,11 @@ internal sealed class MainWindow : Window
         BorderThickness = new Thickness(2), CornerRadius = new CornerRadius(30),
         IsHitTestVisible = false, Visibility = Visibility.Collapsed
     };
-    private readonly StackPanel _dockStack = new() { Spacing = 6 };
+    private readonly Grid _dockContent = new();
+    private readonly StackPanel _dockStack = new()
+    {
+        Spacing = 6, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center
+    };
     private readonly StackPanel _controls = new() { Spacing = 6 };
     private readonly TranslateTransform _dockPosition = new();
     private readonly List<Shape> _themeShapes = new();
@@ -74,7 +83,19 @@ internal sealed class MainWindow : Window
     private readonly Button _rotateRight;
     private readonly Button _capture;
     private readonly Button _collapse;
+    private readonly Button _expand;
     private readonly RotateTransform _chevronRotation = new() { CenterX = 12, CenterY = 12 };
+    private readonly RotateTransform _expandChevronRotation = new() { CenterX = 12, CenterY = 12 };
+    private readonly UISettings _uiSettings = new();
+    private readonly Stopwatch _motionClock = Stopwatch.StartNew();
+    private CompositionRoundedRectangleGeometry? _dockClipGeometry;
+    private CompositionGeometricClip? _dockClip;
+    private DockPresentation _dockPresentation;
+    private DockPresentation _snapPresentation;
+    private DockMotion? _dockMotion;
+    private DockMotion? _snapMotion;
+    private bool _renderingMotion;
+    private int _renderedMotionFrames;
     private readonly TaskCompletionSource<bool> _firstFrame = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly object _frameGate = new();
     private SoftwareBitmap? _pendingFrame;
@@ -92,7 +113,6 @@ internal sealed class MainWindow : Window
     private DockEdge _candidateEdge;
     private int _frameWidth = 640;
     private int _frameHeight = 480;
-    private Storyboard? _dockAnimation;
     private CancellationTokenSource? _toastLifetime;
 
     public MainWindow(LaunchOptions options)
@@ -142,23 +162,33 @@ internal sealed class MainWindow : Window
         Canvas chevron = MakeGlyph("M 8 5 L 15 12 L 8 19");
         chevron.RenderTransform = _chevronRotation;
         _collapse = MakeButton("Hide controls", chevron);
-        _collapse.Click += (_, _) =>
-        {
-            _settings = _settings with { IsDockCollapsed = !_settings.IsDockCollapsed };
-            LayoutDock(true);
-            SaveSettings();
-        };
+        _collapse.Click += (_, _) => ToggleDock();
+        Canvas expandChevron = MakeGlyph("M 8 5 L 15 12 L 8 19");
+        expandChevron.RenderTransform = _expandChevronRotation;
+        _expand = MakeButton("Show controls", new Viewbox { Width = 18, Height = 18, Child = expandChevron });
+        _expand.MinWidth = _expand.MinHeight = 0;
+        _expand.HorizontalAlignment = HorizontalAlignment.Center;
+        _expand.VerticalAlignment = VerticalAlignment.Center;
+        _expand.Click += (_, _) => ToggleDock();
 
         foreach (Button control in new[] { _cameraButton, _rotateLeft, _rotateRight, _capture }) _controls.Children.Add(control);
         _dockStack.Children.Add(_grip);
         _dockStack.Children.Add(_controls);
         _dockStack.Children.Add(_collapse);
-        _dock.Child = _dockStack;
+        _dockContent.Children.Add(_dockStack);
+        _dockContent.Children.Add(_expand);
+        _dock.Child = _dockContent;
         _dock.RenderTransform = _dockPosition;
         _overlay.Children.Add(_snapPreview);
         _overlay.Children.Add(_dock);
 
-        _root.SizeChanged += (_, _) => { LayoutPreview(); if (!_dragging) LayoutDock(false); };
+        _root.SizeChanged += (_, _) =>
+        {
+            LayoutPreview();
+            if (_dragging) FinishDrag(false);
+            HideSnapPreview();
+            LayoutDock(false);
+        };
         _root.ActualThemeChanged += (_, _) => ApplyTheme();
         _root.Loaded += async (_, _) => await InitializeAsync();
         Closed += async (_, _) => await CloseAsync();
@@ -352,69 +382,193 @@ internal sealed class MainWindow : Window
         foreach (DockEdge edge in Enum.GetValues<DockEdge>())
         {
             ToggleMenuFlyoutItem item = new() { Text = Strings.Get(edge.ToString()), IsChecked = _settings.DockEdge == edge };
-            item.Click += (_, _) => { _settings = _settings with { DockEdge = edge }; LayoutDock(true); SaveSettings(); };
+            item.Click += (_, _) => { _settings = _settings with { DockEdge = edge }; LayoutDock(true, dropping: true); SaveSettings(); };
             menu.Items.Add(item);
         }
         menu.ShowAt(_grip);
     }
 
-    private (double Width, double Height) DockSize(DockEdge edge)
+    private void ToggleDock()
     {
-        double length = _settings.IsDockCollapsed ? 112 : 312;
-        return edge is DockEdge.Top or DockEdge.Bottom ? (length, 62) : (62, length);
+        if (_dragging) FinishDrag(false);
+        bool hadFocus = _collapse.FocusState != FocusState.Unfocused || _expand.FocusState != FocusState.Unfocused;
+        _settings = _settings with { IsDockCollapsed = !_settings.IsDockCollapsed };
+        LayoutDock(true);
+        if (hadFocus) (_settings.IsDockCollapsed ? _expand : _collapse).Focus(FocusState.Programmatic);
+        SaveSettings();
     }
 
-    private void LayoutDock(bool animate)
+    private static (double Width, double Height) DockSize(DockEdge edge, bool collapsed)
     {
-        if (_root.ActualWidth <= 0 || _root.ActualHeight <= 0) return;
-        bool horizontal = _settings.DockEdge is DockEdge.Top or DockEdge.Bottom;
+        bool horizontal = edge is DockEdge.Top or DockEdge.Bottom;
+        return collapsed ? (horizontal ? (46, 26) : (26, 46)) : (horizontal ? (312, 62) : (62, 312));
+    }
+
+    private DockPresentation AnchoredDock(DockEdge edge, bool collapsed)
+    {
+        var size = DockSize(edge, collapsed);
+        DockPoint position = DockGeometry.Position(edge, _root.ActualWidth, _root.ActualHeight,
+            size.Width, size.Height, collapsed ? 8 : 16);
+        return new DockPresentation(edge, position.X, position.Y, size.Width, size.Height,
+            collapsed ? 0 : 1, collapsed ? 1 : 0);
+    }
+
+    private void LayoutDock(bool animate, bool dropping = false)
+    {
+        if (_closing) return;
+        if (_root.ActualWidth <= 0 || _root.ActualHeight <= 0)
+        {
+            _dockMotion = null;
+            UpdateMotionSubscription();
+            return;
+        }
+        DockPresentation target = AnchoredDock(_settings.DockEdge, _settings.IsDockCollapsed);
+        SetDockInteraction();
+        if (animate && _uiSettings.AnimationsEnabled && _dockPresentation.Width > 0)
+        {
+            _dockMotion = new DockMotion(_dockPresentation, target, _motionClock.Elapsed.TotalSeconds,
+                dropping ? 0.42 : 0.36, dropping ? 0.82 : 0.88);
+        }
+        else
+        {
+            _dockMotion = null;
+            ApplyDockPresentation(target);
+        }
+        UpdateMotionSubscription();
+    }
+
+    private void SetDockInteraction()
+    {
+        bool expanded = !_settings.IsDockCollapsed;
+        _dockStack.IsHitTestVisible = expanded;
+        foreach (Button button in new[] { _grip, _cameraButton, _rotateLeft, _rotateRight, _capture, _collapse })
+        {
+            button.IsTabStop = expanded;
+            AutomationProperties.SetAccessibilityView(button, expanded ? AccessibilityView.Control : AccessibilityView.Raw);
+        }
+        _expand.IsHitTestVisible = !expanded;
+        _expand.IsTabStop = !expanded;
+        AutomationProperties.SetAccessibilityView(_expand, expanded ? AccessibilityView.Raw : AccessibilityView.Control);
+    }
+
+    private void ApplyDockPresentation(DockPresentation presentation)
+    {
+        DockPoint clamped = DockGeometry.Clamp(new DockPoint(presentation.X, presentation.Y),
+            _root.ActualWidth, _root.ActualHeight, presentation.Width, presentation.Height, 0);
+        _dockPresentation = presentation with { X = clamped.X, Y = clamped.Y };
+        _dock.Width = presentation.Width;
+        _dock.Height = presentation.Height;
+        _dock.CornerRadius = new CornerRadius(Math.Min(presentation.Width, presentation.Height) / 2);
+        _dockPosition.X = clamped.X;
+        _dockPosition.Y = clamped.Y;
+
+        bool horizontal = presentation.Edge is DockEdge.Top or DockEdge.Bottom;
         _dockStack.Orientation = _controls.Orientation = horizontal ? Orientation.Horizontal : Orientation.Vertical;
-        _controls.Visibility = _settings.IsDockCollapsed ? Visibility.Collapsed : Visibility.Visible;
-        string label = Strings.Get(_settings.IsDockCollapsed ? "Show controls" : "Hide controls");
-        ToolTipService.SetToolTip(_collapse, label);
-        AutomationProperties.SetName(_collapse, label);
-        _chevronRotation.Angle = (_settings.DockEdge switch
+        _dockStack.Width = horizontal ? 294 : 44;
+        _dockStack.Height = horizontal ? 44 : 294;
+        _dockStack.Opacity = presentation.ExpandedOpacity;
+        _expand.Width = horizontal ? 44 : 24;
+        _expand.Height = horizontal ? 24 : 44;
+        _expand.Opacity = presentation.CollapsedOpacity;
+        _chevronRotation.Angle = presentation.Edge switch
         {
             DockEdge.Right => 0, DockEdge.Bottom => 90, DockEdge.Left => 180, _ => 270
-        }) + (_settings.IsDockCollapsed ? 180 : 0);
-        var size = DockSize(_settings.DockEdge);
-        _dock.Width = size.Width;
-        _dock.Height = size.Height;
-        DockPoint position = DockGeometry.Position(_settings.DockEdge, _root.ActualWidth, _root.ActualHeight, size.Width, size.Height);
-        MoveDock(position.X, position.Y, animate);
-    }
-
-    private void MoveDock(double x, double y, bool animate)
-    {
-        double previousX = _dockPosition.X;
-        double previousY = _dockPosition.Y;
-        _dockAnimation?.Stop();
-        _dockPosition.X = x;
-        _dockPosition.Y = y;
-        if (!animate) return;
-        Storyboard storyboard = new();
-        AddAnimation(storyboard, "X", previousX, x);
-        AddAnimation(storyboard, "Y", previousY, y);
-        _dockAnimation = storyboard;
-        storyboard.Begin();
-    }
-
-    private void AddAnimation(Storyboard storyboard, string property, double from, double to)
-    {
-        DoubleAnimation animation = new()
-        {
-            From = from, To = to, Duration = new Duration(TimeSpan.FromMilliseconds(220)),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
-        Storyboard.SetTarget(animation, _dockPosition);
-        Storyboard.SetTargetProperty(animation, property);
-        storyboard.Children.Add(animation);
+        _expandChevronRotation.Angle = _chevronRotation.Angle + 180;
+
+        // Keep both sets of controls and the acrylic alive. The compositor clip
+        // follows the capsule on the same frame, even while its contents reflow.
+        if (_dockClipGeometry is null)
+        {
+            Visual visual = ElementCompositionPreview.GetElementVisual(_dockContent);
+            _dockClipGeometry = visual.Compositor.CreateRoundedRectangleGeometry();
+            _dockClip = visual.Compositor.CreateGeometricClip(_dockClipGeometry);
+            visual.Clip = _dockClip;
+        }
+        float width = (float)Math.Max(0, presentation.Width - 2);
+        float height = (float)Math.Max(0, presentation.Height - 2);
+        _dockContent.Width = width;
+        _dockContent.Height = height;
+        _dockClipGeometry.Size = new Vector2(width, height);
+        _dockClipGeometry.CornerRadius = new Vector2(Math.Min(width, height) / 2);
+    }
+
+    private void MoveDock(double x, double y)
+    {
+        _dockMotion = null;
+        ApplyDockPresentation(_dockPresentation with { X = x, Y = y });
+        UpdateMotionSubscription();
+    }
+
+    private void ShowSnapPreview(DockEdge edge)
+    {
+        DockPresentation target = AnchoredDock(edge, false);
+        bool visible = _snapPreview.Visibility == Visibility.Visible;
+        _snapPreview.Visibility = Visibility.Visible;
+        if (visible && (_snapMotion?.Target.Edge ?? _snapPresentation.Edge) == edge) return;
+        if (visible && _uiSettings.AnimationsEnabled)
+            _snapMotion = new DockMotion(_snapPresentation, target, _motionClock.Elapsed.TotalSeconds, 0.30, 0.82);
+        else
+        {
+            _snapMotion = null;
+            ApplySnapPresentation(target);
+        }
+        UpdateMotionSubscription();
+    }
+
+    private void ApplySnapPresentation(DockPresentation presentation)
+    {
+        DockPoint point = DockGeometry.Clamp(new DockPoint(presentation.X, presentation.Y),
+            _root.ActualWidth, _root.ActualHeight, presentation.Width, presentation.Height, 0);
+        _snapPresentation = presentation with { X = point.X, Y = point.Y };
+        _snapPreview.Width = presentation.Width;
+        _snapPreview.Height = presentation.Height;
+        _snapPreview.CornerRadius = new CornerRadius(Math.Min(presentation.Width, presentation.Height) / 2);
+        Canvas.SetLeft(_snapPreview, point.X);
+        Canvas.SetTop(_snapPreview, point.Y);
+    }
+
+    private void HideSnapPreview()
+    {
+        _snapMotion = null;
+        _snapPreview.Visibility = Visibility.Collapsed;
+        UpdateMotionSubscription();
+    }
+
+    private void RenderDockMotion(object? sender, object args)
+    {
+        _renderedMotionFrames++;
+        double now = _motionClock.Elapsed.TotalSeconds;
+        bool finish = !_uiSettings.AnimationsEnabled;
+        if (_dockMotion is { } dockMotion)
+        {
+            ApplyDockPresentation(finish ? dockMotion.Target : dockMotion.Sample(now));
+            if (finish || dockMotion.IsComplete(now)) _dockMotion = null;
+        }
+        if (_snapMotion is { } snapMotion)
+        {
+            ApplySnapPresentation(finish ? snapMotion.Target : snapMotion.Sample(now));
+            if (finish || snapMotion.IsComplete(now)) _snapMotion = null;
+        }
+        UpdateMotionSubscription();
+    }
+
+    private void UpdateMotionSubscription()
+    {
+        bool needed = !_closing && (_dockMotion is not null || _snapMotion is not null);
+        if (_renderingMotion == needed) return;
+        _renderingMotion = needed;
+        if (needed) CompositionTarget.Rendering += RenderDockMotion;
+        else CompositionTarget.Rendering -= RenderDockMotion;
     }
 
     private void GripPressed(object sender, PointerRoutedEventArgs args)
     {
         var point = args.GetCurrentPoint(_root);
-        if (!point.Properties.IsLeftButtonPressed) return;
+        if (_settings.IsDockCollapsed || !point.Properties.IsLeftButtonPressed) return;
+        // Freeze the displayed presentation, so grabbing a moving dock never jumps.
+        _dockMotion = null;
+        UpdateMotionSubscription();
         _dragStart = point.Position;
         _dragOffset = new Point(point.Position.X - _dockPosition.X, point.Position.Y - _dockPosition.Y);
         _candidateEdge = _settings.DockEdge;
@@ -432,15 +586,10 @@ internal sealed class MainWindow : Window
         args.Handled = true;
         DockPoint current = DockGeometry.Clamp(new DockPoint(point.X - _dragOffset.X, point.Y - _dragOffset.Y),
             _root.ActualWidth, _root.ActualHeight, _dock.Width, _dock.Height);
-        MoveDock(current.X, current.Y, false);
-        _candidateEdge = DockGeometry.NearestEdge(point.X, point.Y, _root.ActualWidth, _root.ActualHeight, _candidateEdge);
-        var size = DockSize(_candidateEdge);
-        DockPoint target = DockGeometry.Position(_candidateEdge, _root.ActualWidth, _root.ActualHeight, size.Width, size.Height);
-        _snapPreview.Width = size.Width;
-        _snapPreview.Height = size.Height;
-        Canvas.SetLeft(_snapPreview, target.X);
-        Canvas.SetTop(_snapPreview, target.Y);
-        _snapPreview.Visibility = Visibility.Visible;
+        MoveDock(current.X, current.Y);
+        _candidateEdge = DockGeometry.NearestEdge(current.X + _dock.Width / 2, current.Y + _dock.Height / 2,
+            _root.ActualWidth, _root.ActualHeight, _candidateEdge);
+        ShowSnapPreview(_candidateEdge);
     }
 
     private void GripReleased(object sender, PointerRoutedEventArgs args)
@@ -448,7 +597,6 @@ internal sealed class MainWindow : Window
         if (!_dragging) return;
         bool moved = _dragMoved;
         FinishDrag(true);
-        _grip.ReleasePointerCapture(args.Pointer);
         args.Handled = true;
         if (!moved) ShowDockMenu();
     }
@@ -457,13 +605,14 @@ internal sealed class MainWindow : Window
     {
         if (!_dragging) return;
         _dragging = false;
-        _snapPreview.Visibility = Visibility.Collapsed;
+        _grip.ReleasePointerCaptures();
+        HideSnapPreview();
         if (commit && _dragMoved)
         {
             _settings = _settings with { DockEdge = _candidateEdge };
             SaveSettings();
         }
-        LayoutDock(_dragMoved);
+        LayoutDock(_dragMoved, dropping: true);
     }
 
     private void ApplyTheme()
@@ -550,6 +699,12 @@ internal sealed class MainWindow : Window
             _pendingFrame = null;
         }
         _toastLifetime?.Cancel();
+        _dockMotion = null;
+        _snapMotion = null;
+        UpdateMotionSubscription();
+        _grip.ReleasePointerCaptures();
+        _dockClip?.Dispose();
+        _dockClipGeometry?.Dispose();
         _camera.FrameReady -= FrameReady;
         await _camera.DisposeAsync();
     }
@@ -572,6 +727,7 @@ internal sealed class MainWindow : Window
                 throw new InvalidOperationException($"Capture {turns} has incorrect dimensions.");
             captures.Add(capture);
         }
+        await CheckDockMotionAsync();
         _settings = _settings with { RotationQuarterTurns = 0, DockEdge = DockEdge.Right, IsDockCollapsed = false };
         _root.RequestedTheme = ElementTheme.Dark;
         LayoutPreview();
@@ -588,6 +744,86 @@ internal sealed class MainWindow : Window
         LayoutDock(false);
         await SaveScreenshotAsync("ui-left-light.png");
         await FinishSmokeTestAsync(true, null, captures);
+    }
+
+    private async Task CheckDockMotionAsync()
+    {
+        Brush surface = _dock.Background;
+        foreach (DockEdge edge in Enum.GetValues<DockEdge>())
+        {
+            _settings = _settings with { DockEdge = edge, IsDockCollapsed = false };
+            LayoutDock(false);
+            ToggleDock();
+            await WaitForDockMotionAsync();
+            AssertDockPresentation();
+            if (_grip.IsTabStop || _dockStack.IsHitTestVisible || !_expand.IsTabStop || _dockStack.Opacity != 0)
+                throw new InvalidOperationException("Collapsed controls remain visible or interactive.");
+            if (AutomationProperties.GetAccessibilityView(_grip) != AccessibilityView.Raw)
+                throw new InvalidOperationException("The hidden drag grip remains in the accessibility control view.");
+            ToggleDock();
+            await WaitForDockMotionAsync();
+            AssertDockPresentation();
+        }
+
+        // Reverse an in-flight fold from its displayed dimensions, not its old target.
+        ToggleDock();
+        await Task.Delay(35);
+        DockPresentation before = _dockPresentation;
+        ToggleDock();
+        if (_uiSettings.AnimationsEnabled && _dockPresentation != before)
+            throw new InvalidOperationException("Retargeting a dock animation jumps its presentation.");
+        await Task.Delay(35);
+        ToggleDock();
+        await WaitForDockMotionAsync();
+        AssertDockPresentation();
+
+        _settings = _settings with { IsDockCollapsed = false };
+        LayoutDock(false);
+        ShowSnapPreview(DockEdge.Top);
+        ShowSnapPreview(DockEdge.Right);
+        await WaitForDockMotionAsync();
+        DockPresentation target = AnchoredDock(DockEdge.Right, false);
+        if (Math.Abs(_snapPresentation.X - target.X) > 0.01 || Math.Abs(_snapPresentation.Width - target.Width) > 0.01)
+            throw new InvalidOperationException("The animated snap preview did not reach its edge.");
+        HideSnapPreview();
+
+        _settings = _settings with { DockEdge = DockEdge.Bottom };
+        LayoutDock(true, dropping: true);
+        await Task.Delay(35);
+        // Window resizing takes this same immediate layout path and cancels motion.
+        LayoutDock(false);
+        AssertDockPresentation();
+        if (_dockMotion is not null || _snapMotion is not null || _renderingMotion)
+            throw new InvalidOperationException("Dock motion kept running after cancellation.");
+        if (!ReferenceEquals(surface, _dock.Background))
+            throw new InvalidOperationException("Dock transitions recreated their acrylic surface.");
+    }
+
+    private async Task WaitForDockMotionAsync()
+    {
+        Stopwatch timeout = Stopwatch.StartNew();
+        while (_dockMotion is not null || _snapMotion is not null)
+        {
+            if (timeout.Elapsed > TimeSpan.FromSeconds(3))
+                throw new TimeoutException("Dock motion did not finish.");
+            await Task.Delay(16);
+        }
+        _root.UpdateLayout();
+    }
+
+    private void AssertDockPresentation()
+    {
+        DockPresentation expected = AnchoredDock(_settings.DockEdge, _settings.IsDockCollapsed);
+        bool horizontal = _settings.DockEdge is DockEdge.Top or DockEdge.Bottom;
+        double expectedWidth = _settings.IsDockCollapsed ? (horizontal ? 46 : 26) : (horizontal ? 312 : 62);
+        double expectedHeight = _settings.IsDockCollapsed ? (horizontal ? 26 : 46) : (horizontal ? 62 : 312);
+        _root.UpdateLayout();
+        if (Math.Abs(_dock.ActualWidth - expectedWidth) > 0.1 || Math.Abs(_dock.ActualHeight - expectedHeight) > 0.1
+            || Math.Abs(_dockPosition.X - expected.X) > 0.1 || Math.Abs(_dockPosition.Y - expected.Y) > 0.1
+            || _dockStack.Opacity != expected.ExpandedOpacity || _expand.Opacity != expected.CollapsedOpacity)
+            throw new InvalidOperationException("The dock did not reach its expected size, edge, or opacity.");
+        if (_dockClipGeometry is null || Math.Abs(_dockClipGeometry.Size.X - (expectedWidth - 2)) > 0.1)
+            throw new InvalidOperationException("The content clip does not match the dock surface.");
     }
 
     private async Task SaveScreenshotAsync(string name)
@@ -614,7 +850,11 @@ internal sealed class MainWindow : Window
         string directory = _options.CaptureDirectory!;
         Directory.CreateDirectory(directory);
         await File.WriteAllTextAsync(Path.Combine(directory, "smoke-result.json"),
-            JsonSerializer.Serialize(new { passed, error, captures }, new JsonSerializerOptions { WriteIndented = true }));
+            JsonSerializer.Serialize(new
+            {
+                passed, error, captures, animationsEnabled = _uiSettings.AnimationsEnabled,
+                dockMotionFrames = _renderedMotionFrames
+            }, new JsonSerializerOptions { WriteIndented = true }));
         Environment.ExitCode = passed ? 0 : 1;
         Close();
     }

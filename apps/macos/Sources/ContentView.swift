@@ -230,8 +230,6 @@ struct ContentView: View {
                     }
                 }
             }
-            Divider()
-            Button("Refresh Cameras") { camera.retry() }
         } label: {
             Text(" ").frame(width: 42, height: 42)
         }
@@ -315,14 +313,6 @@ struct ContentView: View {
                 .lineSpacing(3)
             if camera.state == .denied {
                 Button("Open Settings") { model.openCameraPrivacy() }
-                    .buttonStyle(.bordered)
-                    .padding(.top, 5)
-                Button("Try Again") { camera.retry() }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.65))
-            } else if case .failed = camera.state {
-                Button("Try Again") { camera.retry() }
                     .buttonStyle(.bordered)
                     .padding(.top, 5)
             }

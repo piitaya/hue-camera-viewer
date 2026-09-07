@@ -16,6 +16,13 @@ public sealed class DockGeometryTests
     public void TiedEdgesKeepTheCurrentPositionWithoutJitter()
         => Assert.Equal(DockEdge.Left, DockGeometry.NearestEdge(10, 10, 800, 600, DockEdge.Left));
 
+    [Theory]
+    [InlineData(20, 21, DockEdge.Top)]
+    [InlineData(20, 36, DockEdge.Top)]
+    [InlineData(20, 37, DockEdge.Left)]
+    public void CornerPreviewChangesEdgeOnlyBeyondTheSnapThreshold(double x, double y, DockEdge expected)
+        => Assert.Equal(expected, DockGeometry.NearestEdge(x, y, 800, 600, DockEdge.Top));
+
     [Fact]
     public void BottomDockRemainsCenteredAndInset()
         => Assert.Equal(new DockPoint(250, 520), DockGeometry.Position(DockEdge.Bottom, 800, 600, 300, 64));

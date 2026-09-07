@@ -21,7 +21,8 @@ public static class DockGeometry
             [DockEdge.Left] = x
         };
         var nearest = distances.Min(pair => pair.Value);
-        return distances.TryGetValue(current, out var currentDistance) && currentDistance == nearest
+        // Keep the preview steady when the pointer moves near a corner.
+        return distances.TryGetValue(current, out var currentDistance) && currentDistance <= nearest + 16
             ? current
             : distances.First(pair => pair.Value == nearest).Key;
     }
