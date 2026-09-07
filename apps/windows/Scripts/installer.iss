@@ -7,7 +7,7 @@
 
 [Setup]
 AppId={{ADB72C20-A36B-497A-9876-47A9D381EC49}
-AppName=Hue
+AppName=Hue Camera Viewer
 AppVersion={#AppVersion}
 DefaultDirName={localappdata}\Programs\Hue
 PrivilegesRequired=lowest

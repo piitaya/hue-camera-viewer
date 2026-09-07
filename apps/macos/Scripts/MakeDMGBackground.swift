@@ -34,7 +34,7 @@ func text(_ string: String, top: CGFloat, size: CGFloat, weight: NSFont.Weight, 
     ])
 }
 
-text("Install Hue", top: 44, size: 30, weight: .semibold, color: ink)
+text("Install Hue Camera Viewer", top: 44, size: 30, weight: .semibold, color: ink)
 text("Drag Hue to Applications.", top: 89, size: 15, weight: .regular, color: secondary)
 
 for center in [CGFloat(180), CGFloat(480)] {

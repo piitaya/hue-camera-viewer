@@ -1,4 +1,4 @@
-# Hue
+# Hue Camera Viewer
 
 A minimal viewer for HUE and USB document cameras: live preview, 90° rotation,
 and PNG capture to the Desktop, with a movable, collapsible dock.

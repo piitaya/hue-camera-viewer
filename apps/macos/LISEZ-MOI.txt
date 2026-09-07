@@ -1,4 +1,4 @@
-Hue — Installation et utilisation
+Hue Camera Viewer — Installation et utilisation
 Mac Intel ou Apple Silicon • macOS 13 ou ultérieur
 
 1. Ouvrez Hue-1.0-Universal.dmg.
