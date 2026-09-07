@@ -54,13 +54,25 @@ jobs:
       - name: Build self-contained app
         shell: pwsh
         run: ./apps/windows/Scripts/build.ps1 -Configuration Release -Runtime ${{ matrix.runtime }} -OutputDirectory "${{ github.workspace }}/artifacts/${{ matrix.runtime }}"
+      - name: Create installer
+        shell: pwsh
+        run: ./apps/windows/Scripts/package.ps1 -Runtime ${{ matrix.runtime }} -AppDirectory "${{ github.workspace }}/artifacts/${{ matrix.runtime }}" -OutputDirectory "${{ github.workspace }}/artifacts/installers"
+      - name: Install preview
+        if: matrix.runtime == 'win-x64'
+        shell: pwsh
+        run: |
+          $installer = Join-Path $env:GITHUB_WORKSPACE 'artifacts/installers/Hue-Setup-x64.exe'
+          $installPath = Join-Path $env:RUNNER_TEMP 'Hue-installed'
+          $process = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', ('/DIR="' + $installPath + '"')) -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Installation failed with exit code $($process.ExitCode)." }
+          if (-not (Test-Path (Join-Path $installPath 'Hue.exe'))) { throw 'The installer did not install Hue.exe.' }
       - name: Test the packaged app
         if: matrix.runtime == 'win-x64'
         shell: pwsh
         run: |
           $capturePath = Join-Path $env:RUNNER_TEMP 'hue-smoke'
           New-Item -ItemType Directory -Force $capturePath | Out-Null
-          $appPath = Join-Path $env:GITHUB_WORKSPACE 'artifacts/win-x64/Hue.exe'
+          $appPath = Join-Path $env:RUNNER_TEMP 'Hue-installed/Hue.exe'
           $process = Start-Process -FilePath $appPath -ArgumentList @('--smoke-test', '--capture-directory', ('"' + $capturePath + '"')) -PassThru
           if (-not $process.WaitForExit(90000)) {
             $process.Kill()
@@ -69,7 +81,20 @@ jobs:
           if ($process.ExitCode -ne 0) { throw "Smoke test failed with exit code $($process.ExitCode)." }
           $resultPath = Join-Path $capturePath 'smoke-result.json'
           if (-not (Test-Path $resultPath)) { throw 'The smoke test did not write its result.' }
+          $result = Get-Content $resultPath -Raw | ConvertFrom-Json
+          if (-not $result.passed) { throw "Smoke test failed: $($result.error)" }
           Get-Content $resultPath
+      - name: Uninstall preview
+        if: always() && matrix.runtime == 'win-x64'
+        shell: pwsh
+        run: |
+          $installPath = Join-Path $env:RUNNER_TEMP 'Hue-installed'
+          $uninstaller = Join-Path $installPath 'unins000.exe'
+          if (Test-Path $uninstaller) {
+            $process = Start-Process -FilePath $uninstaller -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -Wait -PassThru
+            if ($process.ExitCode -ne 0) { throw "Uninstall failed with exit code $($process.ExitCode)." }
+            if (Test-Path (Join-Path $installPath 'Hue.exe')) { throw 'Uninstall left the app executable behind.' }
+          }
       - name: Upload smoke test results
         if: always() && matrix.runtime == 'win-x64'
         uses: actions/upload-artifact@v4
@@ -83,6 +108,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Hue-Windows-${{ matrix.runtime }}
-          path: artifacts/Hue-Windows-${{ matrix.runtime }}.zip
+          path: |
+            artifacts/Hue-Windows-${{ matrix.runtime }}.zip
+            artifacts/installers/Hue-Setup-*.exe
           if-no-files-found: error
           retention-days: 14
