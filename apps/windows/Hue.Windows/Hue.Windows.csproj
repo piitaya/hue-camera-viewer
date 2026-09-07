@@ -25,6 +25,7 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260804001" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
     <ProjectReference Include="../Hue.Core/Hue.Core.csproj" />
+    <Content Include="../../../LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../../assets/Hue.ico" Link="Assets/Hue.ico" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../../assets/hue.png" Link="Assets/hue.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
