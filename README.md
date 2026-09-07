@@ -26,3 +26,5 @@ Pull requests and pushes to `main` build and test the affected apps, skipping do
 changes. Manual runs build both apps. Preview installers are available in the workflow's
 artifacts for three days.
 These CI builds are for testing; the macOS preview is not notarized.
+
+Licensed under the [MIT License](LICENSE).

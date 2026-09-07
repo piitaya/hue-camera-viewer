@@ -16,6 +16,7 @@ lipo -create "$BUILD_DIR/slices/arm64/Hue" "$BUILD_DIR/slices/x86_64/Hue" \
     -output "$APP_DIR/Contents/MacOS/Hue"
 lipo "$APP_DIR/Contents/MacOS/Hue" -verify_arch arm64 x86_64
 cp "$PROJECT_DIR/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
+cp "$REPOSITORY_DIR/LICENSE" "$APP_DIR/Contents/Resources/LICENSE.txt"
 # Convert the shared icon into macOS sizes using a build-time tool for the host.
 xcrun swiftc -O -module-cache-path "$BUILD_DIR/tool-module-cache" \
     "$PROJECT_DIR/Scripts/MakeIcon.swift" -o "$BUILD_DIR/make-icon"
