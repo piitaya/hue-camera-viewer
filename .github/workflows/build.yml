@@ -34,6 +34,25 @@ jobs:
         run: bash apps/macos/Scripts/build.sh
       - name: Test
         run: bash apps/macos/Scripts/test.sh
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install DMG packaging tools
+        run: |
+          python -m venv "$RUNNER_TEMP/hue-dmg-tools"
+          "$RUNNER_TEMP/hue-dmg-tools/bin/python" -m pip install -r apps/macos/Scripts/requirements-dmg.txt
+      - name: Create preview DMG
+        env:
+          HUE_APP_PATH: ${{ github.workspace }}/apps/macos/build/Hue.app
+          HUE_DMGBUILD: ${{ runner.temp }}/hue-dmg-tools/bin/dmgbuild
+        run: bash apps/macos/Scripts/package.sh "$GITHUB_WORKSPACE/artifacts/Hue-macOS-Universal-preview.dmg"
+      - name: Upload macOS preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hue-macOS-Universal-preview
+          path: artifacts/Hue-macOS-Universal-preview.dmg
+          if-no-files-found: error
+          retention-days: 14
 
   windows:
     name: Windows ${{ matrix.runtime }}
