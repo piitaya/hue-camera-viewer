@@ -399,8 +399,8 @@ final class CameraEngine: NSObject, ObservableObject {
 
     private func startDemo() {
         invalidateFrames()
-        let raw = CIImage(cgImage: Self.demoDocument())
-        devices = [CameraChoice(id: "demo", name: "HUE HD Pro · Démonstration", isHUE: true)]
+        let raw = Self.demoImage()
+        devices = [CameraChoice(id: "demo", name: NSLocalizedString("HUE HD Pro · Démonstration", comment: "Synthetic camera name"), isHUE: true)]
         selectedDeviceID = "demo"
         state = .starting
         lock.lock()
@@ -415,63 +415,14 @@ final class CameraEngine: NSObject, ObservableObject {
         }
     }
 
-    private static func demoDocument() -> CGImage {
-        let size = NSSize(width: 1600, height: 1200)
-        let picture = NSImage(size: size, flipped: false) { rect in
-            NSColor(calibratedRed: 0.83, green: 0.81, blue: 0.75, alpha: 1).setFill()
-            rect.fill()
-            let paper = NSRect(x: 195, y: 85, width: 1190, height: 1040)
-            NSGraphicsContext.saveGraphicsState()
-            let shadow = NSShadow()
-            shadow.shadowColor = NSColor.black.withAlphaComponent(0.17)
-            shadow.shadowBlurRadius = 28
-            shadow.shadowOffset = NSSize(width: 8, height: -8)
-            shadow.set()
-            NSColor(calibratedRed: 1, green: 0.99, blue: 0.95, alpha: 1).setFill()
-            NSBezierPath(roundedRect: paper, xRadius: 3, yRadius: 3).fill()
-            NSGraphicsContext.restoreGraphicsState()
-            let ink = NSColor(calibratedRed: 0.12, green: 0.20, blue: 0.24, alpha: 1)
-            func text(_ value: String, x: CGFloat, y: CGFloat, size: CGFloat, weight: NSFont.Weight = .regular, color: NSColor? = nil) {
-                (value as NSString).draw(at: NSPoint(x: x, y: y), withAttributes: [
-                    .font: NSFont.systemFont(ofSize: size, weight: weight),
-                    .foregroundColor: color ?? ink
-                ])
-            }
-            text("LE PETIT ATELIER", x: 295, y: 1000, size: 24, weight: .semibold,
-                 color: NSColor(calibratedRed: 0.21, green: 0.48, blue: 0.40, alpha: 1))
-            text("À la découverte des formes", x: 295, y: 915, size: 52, weight: .bold)
-            text("Observe, compare et dessine.", x: 295, y: 859, size: 28)
-            let colors: [NSColor] = [
-                NSColor(calibratedRed: 0.34, green: 0.64, blue: 0.52, alpha: 1),
-                NSColor(calibratedRed: 0.94, green: 0.66, blue: 0.27, alpha: 1),
-                NSColor(calibratedRed: 0.40, green: 0.60, blue: 0.79, alpha: 1)
-            ]
-            colors[0].setFill()
-            NSBezierPath(ovalIn: NSRect(x: 320, y: 530, width: 215, height: 215)).fill()
-            colors[1].setFill()
-            let triangle = NSBezierPath()
-            triangle.move(to: NSPoint(x: 675, y: 530))
-            triangle.line(to: NSPoint(x: 905, y: 530))
-            triangle.line(to: NSPoint(x: 790, y: 745))
-            triangle.close()
-            triangle.fill()
-            colors[2].setFill()
-            NSBezierPath(roundedRect: NSRect(x: 1050, y: 530, width: 200, height: 200), xRadius: 5, yRadius: 5).fill()
-            text("un cercle", x: 354, y: 473, size: 28, weight: .medium)
-            text("un triangle", x: 711, y: 473, size: 28, weight: .medium)
-            text("un carré", x: 1091, y: 473, size: 28, weight: .medium)
-            text("À toi de jouer !", x: 295, y: 359, size: 32, weight: .semibold)
-            NSColor(calibratedRed: 0.80, green: 0.83, blue: 0.81, alpha: 1).setStroke()
-            for y in stride(from: 190, through: 295, by: 52) {
-                let line = NSBezierPath()
-                line.move(to: NSPoint(x: 295, y: y))
-                line.line(to: NSPoint(x: 1295, y: y))
-                line.lineWidth = 1.5
-                line.stroke()
-            }
-            return true
-        }
-        return picture.cgImage(forProposedRect: nil, context: nil, hints: nil)!
+    private static func demoImage() -> CIImage {
+        let background = CIImage(color: CIColor(red: 0.94, green: 0.93, blue: 0.90))
+            .cropped(to: CGRect(x: 0, y: 0, width: 800, height: 600))
+        let square = CIImage(color: CIColor(red: 0.25, green: 0.65, blue: 0.50))
+            .cropped(to: CGRect(x: 100, y: 300, width: 200, height: 200))
+        let rectangle = CIImage(color: CIColor(red: 0.95, green: 0.65, blue: 0.25))
+            .cropped(to: CGRect(x: 500, y: 100, width: 180, height: 120))
+        return rectangle.composited(over: square.composited(over: background))
     }
 }
 

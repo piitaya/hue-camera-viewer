@@ -48,15 +48,8 @@ bash Scripts/test.sh
 open -na build/Hue.app --args --demo
 ```
 
-Les tests ciblent macOS 13 et s’exécutent par défaut sur l’architecture du processus
-hôte. Sur Apple Silicon avec Rosetta déjà installé, la commande suivante vérifie
-également les exécutables Intel ; le script n’installe pas Rosetta :
-
-```sh
-HUE_TEST_ARCH=x86_64 bash Scripts/test.sh
-```
-
-Le mode `--demo` utilise un document synthétique, sans activer la caméra.
+Le mode `--demo`, réservé aux tests et au développement, affiche une mire fixe
+simple, sans texte et sans activer la caméra.
 Les captures de démonstration sont placées dans le dossier temporaire Hue-Demo,
 ou dans le dossier passé après `--capture-directory`, créé si nécessaire.
 Ce mode ne modifie pas les préférences de l’utilisateur.
@@ -68,6 +61,14 @@ attend la nouvelle image et enregistre un seul PNG, avec les bons pixels et dime
 Ces tests utilisent des images synthétiques ; la caméra HUE réelle reste à valider.
 Core Image a besoin d’un accès au rendu graphique ; un bac à sable de commande peut
 bloquer son exécution même si l’application fonctionne dans une session macOS normale.
+
+Les tests ciblent macOS 13 et s’exécutent par défaut sur l’architecture du processus
+hôte. Sur Apple Silicon avec Rosetta déjà installé, la commande suivante vérifie
+également les exécutables Intel ; le script n’installe pas Rosetta :
+
+```sh
+HUE_TEST_ARCH=x86_64 bash Scripts/test.sh
+```
 
 Pour inspecter uniquement le rendu du dock classique sur macOS 26+, lancer :
 
