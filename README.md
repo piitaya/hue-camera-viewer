@@ -8,7 +8,7 @@ and PNG capture to the Desktop, with a movable, collapsible dock.
 | App | Requirements | Development |
 | --- | --- | --- |
 | macOS | macOS 13+, Intel or Apple Silicon | [macOS guide](apps/macos/README.md) |
-| Windows preview | Windows 10 (2004)+ x64; Windows 11 x64 or ARM64 | [Windows guide](apps/windows/README.md) |
+| Windows | Windows 10 (2004)+ x64; Windows 11 x64 or ARM64 | [Windows guide](apps/windows/README.md) |
 
 ## Install
 
