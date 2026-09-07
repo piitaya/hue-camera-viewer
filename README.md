@@ -23,5 +23,5 @@ Connect your camera and allow camera access when prompted.
 - `assets`: shared app icons.
 
 Pull requests build and test both apps. Download the macOS preview DMG or Windows preview
-installers and portable ZIPs from the completed workflow's artifacts.
+installers from the completed workflow's artifacts.
 These CI builds are for testing; the macOS preview is not notarized.

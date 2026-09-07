@@ -114,14 +114,9 @@ jobs:
             if ($process.ExitCode -ne 0) { throw "Uninstall failed with exit code $($process.ExitCode)." }
             if (Test-Path (Join-Path $installPath 'Hue.exe')) { throw 'Uninstall left the app executable behind.' }
           }
-      - name: Create preview ZIP
-        shell: pwsh
-        run: Compress-Archive -Path "artifacts/${{ matrix.runtime }}/*" -DestinationPath "artifacts/Hue-Windows-${{ matrix.runtime }}.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: Hue-Windows-${{ matrix.runtime }}
-          path: |
-            artifacts/Hue-Windows-${{ matrix.runtime }}.zip
-            artifacts/installers/Hue-Setup-*.exe
+          path: artifacts/installers/Hue-Setup-*.exe
           if-no-files-found: error
           retention-days: 14
