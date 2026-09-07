@@ -1,8 +1,8 @@
 HUE 1.0 — Visualiseur de documents
-Mac Apple Silicon (M1, M2, M3…) • macOS 26 ou ultérieur
+Mac Intel ou Apple Silicon (M1, M2, M3…) • macOS 13 ou ultérieur
 
 INSTALLATION
-1. Ouvrez Hue-1.0-AppleSilicon.dmg.
+1. Ouvrez Hue-1.0-Universal.dmg.
 2. Glissez Hue dans Applications, puis éjectez l’image disque.
 3. Ouvrez Hue depuis Applications.
 4. Autorisez l’accès à la caméra. À la première capture, autorisez l’accès au Bureau si macOS le demande.
@@ -16,7 +16,8 @@ UTILISATION
 Branchez la caméra HUE. Elle est sélectionnée en priorité au démarrage.
 Le flux occupe la fenêtre et conserve ses proportions, sans recadrage.
 Le bouton vert standard de macOS permet de passer en plein écran.
-Le dock Liquid Glass regroupe toutes les commandes :
+Le dock regroupe toutes les commandes. Il utilise Liquid Glass sur macOS 26 ou
+ultérieur et un matériau translucide classique sur macOS 13 à 15 :
 - choix de la caméra, via l’icône vidéo ;
 - rotation à droite et à gauche par pas de 90° ;
 - capture PNG sur le Bureau, via le bouton de capture.
@@ -42,7 +43,9 @@ FONCTIONNEMENT
 Hue fonctionne en local, sans compte ni serveur. Aucun son n’est enregistré.
 Les captures restent dans le dossier Bureau choisi par macOS ; si votre Bureau est
 synchronisé avec iCloud, vos réglages habituels de synchronisation s’appliquent.
-La caméra HUE réelle doit encore être validée sur votre installation.
+La caméra HUE réelle, les premiers accès caméra/Bureau, macOS 13 et les Mac Intel
+physiques doivent encore être validés. Les tests automatiques utilisent des images
+synthétiques ; les essais via Rosetta ne remplacent pas ces validations.
 
 CODE SOURCE
 L’archive Hue-source.zip contient les sources Swift et les scripts de compilation.

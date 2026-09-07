@@ -3,6 +3,7 @@ import SwiftUI
 
 private let dockAccent = Color(red: 0.64, green: 0.90, blue: 0.79)
 private let stageColor = Color(red: 0.045, green: 0.05, blue: 0.055)
+private let forceClassicDock = ProcessInfo.processInfo.arguments.contains("--classic-dock")
 
 struct ContentView: View {
     @ObservedObject var model: AppModel
@@ -94,7 +95,7 @@ struct ContentView: View {
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)
             }
-            // Both sets of controls stay alive inside one persistent glass
+            // Both sets of controls stay alive inside one persistent dock
             // surface, so folding the dock never recreates its material.
             ZStack {
                 dock(for: edge, in: size)
@@ -108,7 +109,7 @@ struct ContentView: View {
             }
             .frame(width: activeSize.width, height: activeSize.height)
             .clipShape(Capsule())
-            .glassEffect(.regular, in: Capsule())
+            .modifier(DockSurface(forceClassic: forceClassicDock))
             .position(center)
             .animation(.spring(response: 0.36, dampingFraction: 0.88), value: model.isToolbarVisible)
         }
@@ -351,6 +352,22 @@ struct ContentView: View {
             return "Activez Hue dans Réglages Système → Confidentialité et sécurité → Caméra."
         case .failed(let message):
             return message
+        }
+    }
+}
+
+private struct DockSurface: ViewModifier {
+    let forceClassic: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(macOS 26.0, *), !forceClassic {
+            content.glassEffect(.regular, in: Capsule())
+        } else {
+            content
+                .background(.regularMaterial, in: Capsule())
+                .overlay(Capsule().strokeBorder(.primary.opacity(0.12), lineWidth: 0.5))
+                .shadow(color: .black.opacity(0.16), radius: 12, y: 4)
         }
     }
 }

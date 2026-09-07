@@ -3,19 +3,27 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="${HUE_BUILD_DIR:-$PROJECT_DIR/build}"
 APP_DIR="$BUILD_DIR/Hue.app"
-mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources" "$BUILD_DIR/module-cache"
+mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources" "$BUILD_DIR/tool-module-cache"
 
-xcrun swiftc -O -parse-as-library -swift-version 5 -target arm64-apple-macos26.0 \
-    -module-cache-path "$BUILD_DIR/module-cache" \
-    "$PROJECT_DIR"/Sources/*.swift -o "$APP_DIR/Contents/MacOS/Hue"
+for BUILD_ARCH in arm64 x86_64; do
+    mkdir -p "$BUILD_DIR/slices/$BUILD_ARCH" "$BUILD_DIR/module-cache/$BUILD_ARCH"
+    xcrun swiftc -O -parse-as-library -swift-version 5 -target "$BUILD_ARCH-apple-macos13.0" \
+        -module-cache-path "$BUILD_DIR/module-cache/$BUILD_ARCH" \
+        "$PROJECT_DIR"/Sources/*.swift -o "$BUILD_DIR/slices/$BUILD_ARCH/Hue"
+done
+lipo -create "$BUILD_DIR/slices/arm64/Hue" "$BUILD_DIR/slices/x86_64/Hue" \
+    -output "$APP_DIR/Contents/MacOS/Hue"
+lipo "$APP_DIR/Contents/MacOS/Hue" -verify_arch arm64 x86_64
 cp "$PROJECT_DIR/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
-xcrun swiftc -O -module-cache-path "$BUILD_DIR/module-cache" \
+# Icon generation is a build-time tool for the current host, not part of the bundle.
+xcrun swiftc -O -module-cache-path "$BUILD_DIR/tool-module-cache" \
     "$PROJECT_DIR/Scripts/MakeIcon.swift" -o "$BUILD_DIR/make-icon"
 "$BUILD_DIR/make-icon" "$BUILD_DIR/Hue.iconset"
 iconutil -c icns "$BUILD_DIR/Hue.iconset" -o "$APP_DIR/Contents/Resources/Hue.icns"
 
 SIGNING_IDENTITY="${HUE_SIGNING_IDENTITY:--}"
+# Sign only after both architectures and all resources have been assembled.
 codesign --force --options runtime --entitlements "$PROJECT_DIR/Resources/Hue.entitlements" \
     --sign "$SIGNING_IDENTITY" "$APP_DIR"
 codesign --verify --deep --strict "$APP_DIR"
-echo "Application construite : $APP_DIR"
+echo "Built universal app (arm64 + x86_64, macOS 13+): $APP_DIR"
