@@ -54,7 +54,7 @@ cleanup() {
 trap cleanup EXIT
 "$DMGBUILD" -s "$PROJECT_DIR/Scripts/dmg-settings.py" \
     -D "app=$APP_DIR" -D "background=$BUILD_DIR/background.tiff" \
-    "Hue" "$STAGING_DIR/Hue.dmg"
+    "Hue Camera Viewer" "$STAGING_DIR/Hue.dmg"
 hdiutil verify "$STAGING_DIR/Hue.dmg"
 mkdir "$MOUNT_DIR"
 hdiutil attach -readonly -nobrowse -mountpoint "$MOUNT_DIR" "$STAGING_DIR/Hue.dmg" >/dev/null

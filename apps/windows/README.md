@@ -1,4 +1,4 @@
-# Hue for Windows
+# Hue Camera Viewer for Windows
 
 A minimal camera viewer for Windows 10 (2004)+ and Windows 11, in English and French.
 
