@@ -352,7 +352,8 @@ public sealed class CameraService : IAsyncDisposable
                 if (disposed || !ReferenceEquals(sender, capture)) return;
                 await StopCaptureAsync();
                 await ReadDevicesAsync();
-                SetStatus(Devices.Any(device => device.Id == SelectedCameraId) ? CameraState.Error : CameraState.Disconnected,
+                SetStatus(Devices.Any(device => device.Id == SelectedCameraId)
+                        ? ErrorState(unchecked((int)args.Code)) : CameraState.Disconnected,
                     args.Message);
             }
             catch (Exception error) { ReportError(error); }
@@ -362,12 +363,16 @@ public sealed class CameraService : IAsyncDisposable
 
     private void ReportError(Exception error)
     {
-        var state = error is UnauthorizedAccessException || error.HResult == unchecked((int)0x80070005)
-            ? CameraState.AccessDenied
-            : error.HResult is unchecked((int)0x80070020) or unchecked((int)0x800700AA)
-                ? CameraState.Busy : CameraState.Error;
-        SetStatus(state, error.Message);
+        SetStatus(error is UnauthorizedAccessException ? CameraState.AccessDenied : ErrorState(error.HResult), error.Message);
     }
+
+    private static CameraState ErrorState(int code) => unchecked((uint)code) switch
+    {
+        0x80070005 => CameraState.AccessDenied,
+        0x80070020 or 0x800700AA or 0xC00D3EA3 => CameraState.Busy,
+        0xC00D3EA2 => CameraState.Disconnected,
+        _ => CameraState.Error
+    };
 
     private void SetStatus(CameraState state, string? detail = null)
     {

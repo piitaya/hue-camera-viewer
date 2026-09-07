@@ -82,6 +82,9 @@ internal sealed class MainWindow : Window
     private bool _closing;
     private bool _initialized;
     private bool _capturing;
+    private bool _streaming;
+    private bool _hasPresentedFrame;
+    private int _renderEpoch;
     private bool _dragging;
     private bool _dragMoved;
     private Point _dragStart;
@@ -105,7 +108,11 @@ internal sealed class MainWindow : Window
         _preview.RenderTransform = _rotation;
         _root.Children.Add(_preview);
         _permissions.Content = Strings.Get("Open camera settings");
-        _permissions.Click += async (_, _) => await Launcher.LaunchUriAsync(new Uri("ms-settings:privacy-webcam"));
+        _permissions.Click += async (_, _) =>
+        {
+            try { await Launcher.LaunchUriAsync(new Uri("ms-settings:privacy-webcam")); }
+            catch (Exception) { ShowToast("Allow desktop apps to access your camera in Windows Settings."); }
+        };
         _statusPanel.Children.Add(_status);
         _statusPanel.Children.Add(_permissions);
         _root.Children.Add(_statusPanel);
@@ -214,14 +221,17 @@ internal sealed class MainWindow : Window
                 if (_closing || !_camera.HasFrame) continue;
                 try
                 {
+                    int epoch = _renderEpoch;
                     await _source.SetBitmapAsync(frame);
-                    if (_closing) continue;
+                    if (_closing || epoch != _renderEpoch) continue;
                     if (_frameWidth != frame.PixelWidth || _frameHeight != frame.PixelHeight)
                     {
                         _frameWidth = frame.PixelWidth;
                         _frameHeight = frame.PixelHeight;
                         LayoutPreview();
                     }
+                    _hasPresentedFrame = true;
+                    RefreshFrameVisibility();
                     _firstFrame.TrySetResult(true);
                 }
                 catch (Exception exception)
@@ -264,33 +274,49 @@ internal sealed class MainWindow : Window
             ShowToast(_options.CaptureDirectory is null ? "Image saved to Desktop" : "Image saved");
         }
         catch (Exception) { ShowToast("Could not save the image. Check the folder permissions and available space."); }
-        finally { _capturing = false; _capture.IsEnabled = _camera.HasFrame; }
+        finally { _capturing = false; RefreshFrameVisibility(); }
     }
 
     private void ApplyStatus(CameraStatus status)
     {
-        bool streaming = status.State == CameraState.Streaming;
+        _streaming = status.State == CameraState.Streaming;
+        if (!_streaming)
+        {
+            _renderEpoch++;
+            _hasPresentedFrame = false;
+            lock (_frameGate)
+            {
+                _pendingFrame?.Dispose();
+                _pendingFrame = null;
+            }
+        }
         _status.Text = Strings.Get(status.State switch
         {
-            CameraState.Starting => "Starting camera…",
+            CameraState.Starting or CameraState.Streaming => "Starting camera…",
             CameraState.NoCamera => "Connect a camera to begin.",
             CameraState.Disconnected => "Camera disconnected. Reconnect it or choose another camera.",
             CameraState.AccessDenied => "Allow desktop apps to access your camera in Windows Settings.",
             CameraState.Busy => "Camera unavailable. Close other camera apps and try again.",
             _ => "Could not start the camera. Choose a camera to try again."
         });
-        _statusPanel.Visibility = streaming ? Visibility.Collapsed : Visibility.Visible;
         _permissions.Visibility = status.State == CameraState.AccessDenied ? Visibility.Visible : Visibility.Collapsed;
-        _preview.Opacity = streaming ? 1 : 0;
-        _capture.IsEnabled = streaming && !_capturing;
-        _rotateLeft.IsEnabled = streaming;
-        _rotateRight.IsEnabled = streaming;
-        if (streaming)
+        RefreshFrameVisibility();
+        if ((status.State is CameraState.Starting or CameraState.Streaming) && _camera.SelectedCameraId is not null)
         {
             _settings = _settings with { CameraId = _camera.SelectedCameraId };
             SaveSettings();
         }
         UpdateCameraLabel();
+    }
+
+    private void RefreshFrameVisibility()
+    {
+        bool ready = _streaming && _hasPresentedFrame && _camera.HasFrame;
+        _statusPanel.Visibility = ready ? Visibility.Collapsed : Visibility.Visible;
+        _preview.Opacity = ready ? 1 : 0;
+        _capture.IsEnabled = ready && !_capturing;
+        _rotateLeft.IsEnabled = ready;
+        _rotateRight.IsEnabled = ready;
     }
 
     private void UpdateCameraLabel()
