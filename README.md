@@ -1,5 +1,7 @@
 # Hue Camera Viewer
 
+> Independent project, not affiliated with HUE. This app is compatible with HUE cameras.
+
 **English** | [Français](README.fr.md)
 
 A minimal viewer for HUE and USB document cameras: live preview, 90° rotation,

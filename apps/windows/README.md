@@ -1,5 +1,7 @@
 # Hue Camera Viewer for Windows
 
+> Independent project, not affiliated with HUE. This app is compatible with HUE cameras.
+
 A minimal camera viewer for Windows 10 (2004)+ and Windows 11, in English and French.
 
 Open `Hue-Setup.exe`, then launch Hue from the Start menu and choose your camera.
