@@ -2,8 +2,8 @@
 
 A minimal camera viewer for Windows 10 (2004)+ and Windows 11, in English and French.
 
-Open `Hue-Setup-x64.exe` (Intel/AMD) or `Hue-Setup-arm64.exe` (Windows 11 ARM),
-then launch Hue from the Start menu and choose your camera.
+Open `Hue-Setup.exe`, then launch Hue from the Start menu and choose your camera.
+The installer automatically selects the native Intel/AMD or ARM version.
 Captures are saved as PNG files on your Desktop.
 You can uninstall Hue from Windows Settings → Apps.
 
@@ -26,6 +26,10 @@ Run the core tests on any platform with:
 dotnet test Hue.Core.Tests
 ```
 
-GitHub Actions builds installers for both architectures.
-Download them from the workflow's artifacts to try the preview on a PC.
-To package a local build, install Inno Setup 6.3+ and run `./Scripts/package.ps1`.
+GitHub Actions builds one installer for both architectures.
+Download it from the workflow's artifacts to try the preview on a PC.
+To package locally, build both runtimes and install Inno Setup 6.3+, then run:
+
+```powershell
+./Scripts/package.ps1 -X64AppDirectory build/win-x64 -Arm64AppDirectory build/win-arm64
+```

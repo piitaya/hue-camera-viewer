@@ -1,36 +1,42 @@
 param(
-    [ValidateSet('win-x64', 'win-arm64')][string]$Runtime = 'win-x64',
-    [string]$AppDirectory,
+    [Parameter(Mandatory)][string]$X64AppDirectory,
+    [Parameter(Mandatory)][string]$Arm64AppDirectory,
     [string]$OutputDirectory
 )
 $ErrorActionPreference = 'Stop'
 
-if (-not $AppDirectory) { $AppDirectory = Join-Path $PSScriptRoot "../build/$Runtime" }
 if (-not $OutputDirectory) { $OutputDirectory = Join-Path $PSScriptRoot '../installers' }
-$appPath = (Resolve-Path -LiteralPath $AppDirectory).Path
+$x64AppPath = (Resolve-Path -LiteralPath $X64AppDirectory).Path
+$arm64AppPath = (Resolve-Path -LiteralPath $Arm64AppDirectory).Path
 $outputPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputDirectory)
-if ($outputPath.Equals($appPath, [StringComparison]::OrdinalIgnoreCase) -or
-    $outputPath.StartsWith($appPath.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
-    throw 'The installer output directory must be outside the published app directory.'
-}
-foreach ($file in 'Hue.exe', 'Hue.deps.json', 'Hue.runtimeconfig.json', 'coreclr.dll') {
-    if (-not (Test-Path -LiteralPath (Join-Path $appPath $file) -PathType Leaf)) {
-        throw "Missing $file. Run build.ps1 for $Runtime before packaging."
+
+function Test-PublishedApp([string]$AppPath, [string]$Runtime, [UInt16]$ExpectedMachine) {
+    if ($outputPath.Equals($AppPath, [StringComparison]::OrdinalIgnoreCase) -or
+        $outputPath.StartsWith($AppPath.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'The installer output directory must be outside both published app directories.'
+    }
+    foreach ($file in 'Hue.exe', 'Hue.deps.json', 'Hue.runtimeconfig.json', 'coreclr.dll') {
+        if (-not (Test-Path -LiteralPath (Join-Path $AppPath $file) -PathType Leaf)) {
+            throw "Missing $file. Run build.ps1 for $Runtime before packaging."
+        }
+    }
+    foreach ($file in 'Hue.exe', 'coreclr.dll') {
+        $reader = [IO.BinaryReader]::new([IO.File]::OpenRead((Join-Path $AppPath $file)))
+        try {
+            if ($reader.ReadUInt16() -ne 0x5A4D) { throw "$file is not a Windows executable." }
+            $reader.BaseStream.Position = 0x3C
+            $reader.BaseStream.Position = $reader.ReadInt32()
+            if ($reader.ReadUInt32() -ne 0x00004550 -or $reader.ReadUInt16() -ne $ExpectedMachine) {
+                throw "$file does not match the requested $Runtime architecture."
+            }
+        } finally {
+            $reader.Dispose()
+        }
     }
 }
 
-$architecture = if ($Runtime -eq 'win-arm64') { 'arm64' } else { 'x64' }
-$expectedMachine = if ($Runtime -eq 'win-arm64') { 0xAA64 } else { 0x8664 }
-$reader = [IO.BinaryReader]::new([IO.File]::OpenRead((Join-Path $appPath 'Hue.exe')))
-try {
-    $reader.BaseStream.Position = 0x3C
-    $reader.BaseStream.Position = $reader.ReadInt32()
-    if ($reader.ReadUInt32() -ne 0x00004550 -or $reader.ReadUInt16() -ne $expectedMachine) {
-        throw "Hue.exe does not match the requested $Runtime architecture."
-    }
-} finally {
-    $reader.Dispose()
-}
+Test-PublishedApp $x64AppPath 'win-x64' 0x8664
+Test-PublishedApp $arm64AppPath 'win-arm64' 0xAA64
 
 $compiler = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe'
 if (-not (Test-Path -LiteralPath $compiler -PathType Leaf)) {
@@ -43,15 +49,15 @@ $version = $project.SelectSingleNode('/Project/PropertyGroup/Version').InnerText
 if ($version -notmatch '^\d+\.\d+\.\d+(\.\d+)?$') { throw 'The app version must be a numeric release version.' }
 $iconPath = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../../../assets/Hue.ico')).Path
 $arguments = @(
-    "/DAppDirectory=$appPath"
+    "/DX64AppDirectory=$x64AppPath"
+    "/DArm64AppDirectory=$arm64AppPath"
     "/DOutputDirectory=$outputPath"
-    "/DAppArchitecture=$architecture"
     "/DAppVersion=$version"
     "/DSetupIconPath=$iconPath"
     (Join-Path $PSScriptRoot 'installer.iss')
 )
 & $compiler @arguments
 if ($LASTEXITCODE -ne 0) { throw "Installer packaging failed with exit code $LASTEXITCODE." }
-$installer = Join-Path $outputPath "Hue-Setup-$architecture.exe"
+$installer = Join-Path $outputPath 'Hue-Setup.exe'
 if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) { throw 'The installer was not created.' }
 Write-Host "Packaged Hue: $installer"

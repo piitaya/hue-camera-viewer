@@ -13,7 +13,7 @@ and PNG capture to the Desktop, with a movable, collapsible dock.
 ## Install
 
 On macOS, open the DMG and drag Hue to Applications.
-On Windows, run the setup `.exe`, then open Hue from the Start menu.
+On Windows, run `Hue-Setup.exe`, then open Hue from the Start menu.
 Connect your camera and allow camera access when prompted.
 
 ## Repository
@@ -23,5 +23,5 @@ Connect your camera and allow camera access when prompted.
 - `assets`: shared app icons.
 
 Pull requests build and test both apps. Download the macOS preview DMG or Windows preview
-installers from the completed workflow's artifacts.
+installer from the completed workflow's artifacts.
 These CI builds are for testing; the macOS preview is not notarized.

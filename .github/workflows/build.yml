@@ -55,38 +55,38 @@ jobs:
           retention-days: 14
 
   windows:
-    name: Windows ${{ matrix.runtime }}
+    name: Windows
     runs-on: windows-2022
     timeout-minutes: 25
-    strategy:
-      fail-fast: false
-      matrix:
-        runtime: [win-x64, win-arm64]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
       - name: Test core logic
-        if: matrix.runtime == 'win-x64'
         run: dotnet test apps/windows/Hue.Core.Tests --configuration Release
-      - name: Build self-contained app
+      - name: Build self-contained x64 app
         shell: pwsh
-        run: ./apps/windows/Scripts/build.ps1 -Configuration Release -Runtime ${{ matrix.runtime }} -OutputDirectory "${{ github.workspace }}/artifacts/${{ matrix.runtime }}"
+        run: ./apps/windows/Scripts/build.ps1 -Configuration Release -Runtime win-x64 -OutputDirectory "${{ github.workspace }}/artifacts/win-x64"
+      - name: Build self-contained ARM64 app
+        shell: pwsh
+        run: ./apps/windows/Scripts/build.ps1 -Configuration Release -Runtime win-arm64 -OutputDirectory "${{ github.workspace }}/artifacts/win-arm64"
       - name: Create installer
         shell: pwsh
-        run: ./apps/windows/Scripts/package.ps1 -Runtime ${{ matrix.runtime }} -AppDirectory "${{ github.workspace }}/artifacts/${{ matrix.runtime }}" -OutputDirectory "${{ github.workspace }}/artifacts/installers"
+        run: ./apps/windows/Scripts/package.ps1 -X64AppDirectory "${{ github.workspace }}/artifacts/win-x64" -Arm64AppDirectory "${{ github.workspace }}/artifacts/win-arm64" -OutputDirectory "${{ github.workspace }}/artifacts/installers"
       - name: Install preview
-        if: matrix.runtime == 'win-x64'
         shell: pwsh
         run: |
-          $installer = Join-Path $env:GITHUB_WORKSPACE 'artifacts/installers/Hue-Setup-x64.exe'
+          $installer = Join-Path $env:GITHUB_WORKSPACE 'artifacts/installers/Hue-Setup.exe'
           $installPath = Join-Path $env:RUNNER_TEMP 'Hue-installed'
           $process = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', ('/DIR="' + $installPath + '"')) -Wait -PassThru
           if ($process.ExitCode -ne 0) { throw "Installation failed with exit code $($process.ExitCode)." }
-          if (-not (Test-Path (Join-Path $installPath 'Hue.exe'))) { throw 'The installer did not install Hue.exe.' }
+          foreach ($file in 'Hue.exe', 'coreclr.dll') {
+            $expected = Get-FileHash (Join-Path $env:GITHUB_WORKSPACE "artifacts/win-x64/$file")
+            $installed = Get-FileHash (Join-Path $installPath $file)
+            if ($installed.Hash -ne $expected.Hash) { throw "The installer did not select the native x64 $file." }
+          }
       - name: Test the packaged app
-        if: matrix.runtime == 'win-x64'
         shell: pwsh
         run: |
           $capturePath = Join-Path $env:RUNNER_TEMP 'hue-smoke'
@@ -104,7 +104,7 @@ jobs:
           if (-not $result.passed) { throw "Smoke test failed: $($result.error)" }
           Get-Content $resultPath
       - name: Uninstall preview
-        if: always() && matrix.runtime == 'win-x64'
+        if: always()
         shell: pwsh
         run: |
           $installPath = Join-Path $env:RUNNER_TEMP 'Hue-installed'
@@ -116,7 +116,7 @@ jobs:
           }
       - uses: actions/upload-artifact@v4
         with:
-          name: Hue-Windows-${{ matrix.runtime }}
-          path: artifacts/installers/Hue-Setup-*.exe
+          name: Hue-Windows-preview
+          path: artifacts/installers/Hue-Setup.exe
           if-no-files-found: error
           retention-days: 14
