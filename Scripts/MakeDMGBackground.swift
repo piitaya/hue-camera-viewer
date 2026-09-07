@@ -34,8 +34,8 @@ func text(_ string: String, top: CGFloat, size: CGFloat, weight: NSFont.Weight, 
     ])
 }
 
-text("Installer Hue", top: 44, size: 30, weight: .semibold, color: ink)
-text("Glissez Hue dans le dossier Applications.", top: 89, size: 15, weight: .regular, color: secondary)
+text("Install Hue", top: 44, size: 30, weight: .semibold, color: ink)
+text("Drag Hue to Applications.", top: 89, size: 15, weight: .regular, color: secondary)
 
 for center in [CGFloat(180), CGFloat(480)] {
     NSColor(srgbRed: 0.90, green: 0.94, blue: 0.89, alpha: 0.55).setFill()
@@ -56,7 +56,7 @@ arrow.line(to: CGPoint(x: 357, y: 224))
 arrow.line(to: CGPoint(x: 345, y: 236))
 arrow.stroke()
 
-text("Une fois copiée, ouvrez Hue depuis Applications.", top: 366, size: 12,
+text("Then open Hue from Applications.", top: 366, size: 12,
      weight: .regular, color: secondary)
 NSGraphicsContext.restoreGraphicsState()
 

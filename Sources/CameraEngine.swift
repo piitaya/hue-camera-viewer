@@ -400,7 +400,7 @@ final class CameraEngine: NSObject, ObservableObject {
     private func startDemo() {
         invalidateFrames()
         let raw = Self.demoImage()
-        devices = [CameraChoice(id: "demo", name: NSLocalizedString("HUE HD Pro · Démonstration", comment: "Synthetic camera name"), isHUE: true)]
+        devices = [CameraChoice(id: "demo", name: NSLocalizedString("HUE HD Pro · Demo", comment: "Synthetic camera name"), isHUE: true)]
         selectedDeviceID = "demo"
         state = .starting
         lock.lock()

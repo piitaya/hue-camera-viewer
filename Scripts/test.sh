@@ -5,10 +5,10 @@ BUILD_DIR="${HUE_BUILD_DIR:-$PROJECT_DIR/build}"
 TEST_ARCH="${HUE_TEST_ARCH:-$(uname -m)}"
 case "$TEST_ARCH" in
     arm64|x86_64) ;;
-    *) echo "Architecture de test non prise en charge : $TEST_ARCH" >&2; exit 1 ;;
+    *) echo "Unsupported test architecture: $TEST_ARCH" >&2; exit 1 ;;
 esac
 if ! /usr/bin/arch "-$TEST_ARCH" /usr/bin/true >/dev/null 2>&1; then
-    echo "Impossible d’exécuter $TEST_ARCH sur ce Mac. Les tests Intel sur Apple Silicon nécessitent Rosetta déjà installé." >&2
+    echo "Cannot run $TEST_ARCH on this Mac. Intel tests on Apple Silicon require Rosetta to be installed." >&2
     exit 1
 fi
 TEST_DIR="$BUILD_DIR/tests/$TEST_ARCH"
@@ -32,4 +32,4 @@ xcrun swiftc -swift-version 5 -target "$TEST_ARCH-apple-macos13.0" \
 CAPTURE_TEST_DIR="$(mktemp -d "$TEST_DIR/capture-flow.XXXXXX")"
 trap 'rm -rf "$CAPTURE_TEST_DIR"' EXIT
 run_test "$TEST_DIR/capture-flow-tests" --demo --capture-directory "$CAPTURE_TEST_DIR"
-echo "Tests réussis pour $TEST_ARCH (cible macOS 13)."
+echo "Tests passed for $TEST_ARCH (macOS 13 target)."

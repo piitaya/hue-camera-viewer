@@ -5,7 +5,7 @@ BUILD_DIR="${HUE_BUILD_DIR:-$PROJECT_DIR/build}"
 DESTINATION="${1:-$BUILD_DIR/Hue-1.0-Universal.dmg}"
 DMGBUILD="${HUE_DMGBUILD:-$PROJECT_DIR/.venv-dmg/bin/dmgbuild}"
 if [[ ! -x "$DMGBUILD" ]]; then
-    echo "Installez les outils de packaging indiqués dans README.md (section Créer le DMG)." >&2
+    echo "Install the packaging tools listed in README.md before creating the DMG." >&2
     exit 1
 fi
 if [[ -z "${HUE_APP_PATH:-}" ]]; then
@@ -21,13 +21,13 @@ verify_app() {
     lipo "$executable" -verify_arch arm64 x86_64
     minimum="$(plutil -extract LSMinimumSystemVersion raw -o - "$candidate/Contents/Info.plist")"
     if [[ "$minimum" != 13.0 ]]; then
-        echo "Le bundle doit déclarer macOS 13.0 minimum ; valeur trouvée : $minimum" >&2
+        echo "The app bundle must declare macOS 13.0 as its minimum version; found: $minimum" >&2
         return 1
     fi
     for candidate_arch in arm64 x86_64; do
         minimum="$(xcrun vtool -arch "$candidate_arch" -show-build "$executable" | awk '$1 == "minos" { print $2 }')"
         if [[ "$minimum" != 13.0 && "$minimum" != 13.0.0 ]]; then
-            echo "Le binaire $candidate_arch doit cibler macOS 13.0 ; valeur trouvée : $minimum" >&2
+            echo "The $candidate_arch binary must target macOS 13.0; found: $minimum" >&2
             return 1
         fi
     done
@@ -65,4 +65,4 @@ verify_app "$MOUNT_DIR/Hue.app"
 hdiutil detach "$MOUNT_DIR" >/dev/null
 MOUNTED=0
 mv -f "$STAGING_DIR/Hue.dmg" "$DESTINATION"
-echo "Image disque créée : $DESTINATION"
+echo "Created disk image: $DESTINATION"

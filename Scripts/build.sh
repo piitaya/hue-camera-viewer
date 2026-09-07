@@ -26,4 +26,4 @@ SIGNING_IDENTITY="${HUE_SIGNING_IDENTITY:--}"
 codesign --force --options runtime --entitlements "$PROJECT_DIR/Resources/Hue.entitlements" \
     --sign "$SIGNING_IDENTITY" "$APP_DIR"
 codesign --verify --deep --strict "$APP_DIR"
-echo "Application universelle construite (arm64 + x86_64, macOS 13+) : $APP_DIR"
+echo "Built universal app (arm64 + x86_64, macOS 13+): $APP_DIR"

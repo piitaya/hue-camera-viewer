@@ -1,89 +1,89 @@
 # Hue
 
-Visualiseur macOS natif en français pour caméra HUE/USB : aperçu en direct,
-rotations à 90° et capture PNG sur le Bureau.
-L’image occupe tout le contenu d’une fenêtre macOS classique. Un dock escamotable
-contient les commandes et le choix de caméra. Il utilise Liquid Glass sur macOS 26+
-et un matériau translucide classique sur macOS 13 à 15. Il peut être déplacé
-vers les quatre bords avec aperçu de sa position et animation au lâcher.
-Il est vertical sur les côtés et horizontal en haut ou en bas. Le plein écran
-s’utilise via le bouton vert standard de macOS.
-Les commandes de l’application ne définissent aucun raccourci clavier personnalisé.
+A native macOS viewer in French for HUE/USB cameras: live preview, 90° rotations,
+and PNG capture to the Desktop.
+The image fills the content of a standard macOS window. A collapsible dock contains
+the controls and camera picker. It uses Liquid Glass on macOS 26+ and a classic
+translucent material on macOS 13 through 15. Drag it to any of the four edges to
+preview its position and animate it into place on release.
+It is vertical at the sides and horizontal at the top or bottom. Use the standard
+macOS green window button to enter full screen.
+The app's commands do not define any custom keyboard shortcuts.
 
-## État du projet
+## Project status
 
-Cette version cible **les Mac Intel et Apple Silicon avec macOS 13 ou ultérieur**.
-Le même bundle contient les deux architectures, `x86_64` et `arm64`.
-Les tests automatisés utilisent des images synthétiques. Les essais sur macOS 13,
-sur un Mac Intel physique, avec une vraie HUE et les premiers accès caméra/Bureau
-restent à faire. Une exécution via Rosetta ne remplace pas ces validations matérielles.
+This version targets **Intel and Apple Silicon Macs running macOS 13 or later**.
+The same bundle contains both architectures, `x86_64` and `arm64`.
+Automated tests use synthetic images. Testing on macOS 13, on a physical Intel Mac,
+with a real HUE camera, and with the initial camera/Desktop permission prompts
+remains outstanding. Running under Rosetta does not replace these hardware checks.
 
-## Construire
+## Build
 
-Mac Intel ou Apple Silicon disposant d’un Xcode fournissant le SDK macOS 26+.
-Le SDK récent permet de compiler Liquid Glass avec une alternative pour les anciens
-systèmes ; l’application produite déclare macOS 13 minimum.
-La compilation de l’application ne demande aucune bibliothèque tierce ni accès réseau.
+An Intel or Apple Silicon Mac with an Xcode version that provides the macOS 26+ SDK.
+The recent SDK allows Liquid Glass to compile alongside a fallback for older systems;
+the resulting app declares macOS 13 as its minimum version.
+Building the app requires no third-party libraries or network access.
 
 ```sh
 bash Scripts/build.sh
 open build/Hue.app
 ```
 
-Le script compile séparément pour `arm64-apple-macos13.0` et
-`x86_64-apple-macos13.0`, assemble les exécutables avec `lipo`, vérifie les deux
-architectures, puis signe le bundle complet. L’outil de génération d’icône est compilé
-pour la machine de construction uniquement.
-Le bundle produit est signé localement (ad hoc), avec Hardened Runtime et
-l’autorisation caméra. Il n’utilise pas App Sandbox ; macOS contrôle l’accès
-à la caméra et au Bureau avec ses autorisations de confidentialité.
-Pour signer avec un certificat Developer ID existant, définir
-`HUE_SIGNING_IDENTITY="Developer ID Application: …"` avant la compilation.
-La notarisation nécessite vos propres identifiants Apple Developer.
+The script compiles separately for `arm64-apple-macos13.0` and
+`x86_64-apple-macos13.0`, combines the executables with `lipo`, verifies both
+architectures, and then signs the complete bundle. The icon generation tool is
+compiled only for the build machine.
+The resulting bundle is signed locally (ad hoc), with Hardened Runtime and the
+camera entitlement. It does not use App Sandbox; macOS controls camera and Desktop
+access through its privacy permissions.
+To sign with an existing Developer ID certificate, set
+`HUE_SIGNING_IDENTITY="Developer ID Application: …"` before building.
+Notarization requires your own Apple Developer credentials.
 
-## Vérifier
+## Verify
 
 ```sh
 bash Scripts/test.sh
 open -na build/Hue.app --args --demo
 ```
 
-Le mode `--demo`, réservé aux tests et au développement, affiche une mire fixe
-simple, sans texte et sans activer la caméra.
-Les captures de démonstration sont placées dans le dossier temporaire Hue-Demo,
-ou dans le dossier passé après `--capture-directory`, créé si nécessaire.
-Ce mode ne modifie pas les préférences de l’utilisateur.
-Les tests du pipeline vérifient les pixels des quatre rotations,
-les dimensions, les décalages d’origine et l’encodage PNG sans collision.
-Les tests du dock couvrent les quatre bords, l’aimantation et les petites fenêtres.
-Un test de capture vérifie qu’une demande effectuée immédiatement après une rotation
-attend la nouvelle image et enregistre un seul PNG, avec les bons pixels et dimensions.
-Ces tests utilisent des images synthétiques ; la caméra HUE réelle reste à valider.
-Core Image a besoin d’un accès au rendu graphique ; un bac à sable de commande peut
-bloquer son exécution même si l’application fonctionne dans une session macOS normale.
+The `--demo` mode is for testing and development. It displays a simple, fixed test
+pattern with no text, without activating the camera.
+Demo captures are saved in the temporary Hue-Demo folder, or in the directory passed
+after `--capture-directory`, which is created if necessary.
+This mode does not change the user's preferences.
+The pipeline tests check the pixels for all four rotations, dimensions, shifted
+origins, and PNG encoding without filename collisions.
+The dock tests cover all four edges, snapping, and small windows.
+A capture test checks that a request made immediately after a rotation waits for the
+new image and saves exactly one PNG with the correct pixels and dimensions.
+These tests use synthetic images; a real HUE camera still needs to be tested.
+Core Image requires access to graphics rendering; a command sandbox may block its
+execution even when the app works in a normal macOS session.
 
-Les tests ciblent macOS 13 et s’exécutent par défaut sur l’architecture du processus
-hôte. Sur Apple Silicon avec Rosetta déjà installé, la commande suivante vérifie
-également les exécutables Intel ; le script n’installe pas Rosetta :
+The tests target macOS 13 and run on the host process's architecture by default.
+On Apple Silicon with Rosetta already installed, the following command also checks
+the Intel executables; the script does not install Rosetta:
 
 ```sh
 HUE_TEST_ARCH=x86_64 bash Scripts/test.sh
 ```
 
-Pour inspecter uniquement le rendu du dock classique sur macOS 26+, lancer :
+To inspect only the classic dock appearance on macOS 26+, run:
 
 ```sh
 open -na build/Hue.app --args --demo --classic-dock
 ```
 
-L’option `--classic-dock` fonctionne aussi sans `--demo`. Elle force seulement le
-matériau classique ; elle ne simule ni macOS 13 ni ses API. Sans `--demo`, l’application
-utilise la vraie caméra et les captures vont sur le Bureau.
+The `--classic-dock` option also works without `--demo`. It only forces the classic
+material; it does not simulate macOS 13 or its APIs. Without `--demo`, the app uses
+the real camera and saves captures to the Desktop.
 
-## Créer le DMG
+## Create the DMG
 
-Le packaging utilise Python 3.10+ et `dmgbuild`. Installez ses dépendances une fois
-dans un environnement isolé (connexion réseau requise pour cette installation) :
+Packaging uses Python 3.10+ and `dmgbuild`. Install its dependencies once in an
+isolated environment (this installation requires a network connection):
 
 ```sh
 python3 -m venv .venv-dmg
@@ -91,26 +91,26 @@ python3 -m venv .venv-dmg
 bash Scripts/package.sh
 ```
 
-Le DMG s’ouvre sur une fenêtre d’installation illustrée : Hue à gauche,
-une flèche, et le dossier Applications à droite. Il contient uniquement l’application
-et le lien vers Applications comme éléments visibles. Le guide est fourni séparément.
-Le fond Retina et les positions Finder sont générés sans automatiser Finder.
-Pour réutiliser un outil déjà installé, définir `HUE_DMGBUILD` avec son chemin.
-Pour refaire uniquement le DMG d’une application déjà construite et signée,
-définir `HUE_APP_PATH` avec le chemin de ce bundle.
-Le fichier produit par défaut est `build/Hue-1.0-Universal.dmg`. Le script vérifie
-la présence des deux architectures, la cible macOS 13 de chacune, la version minimum
-du bundle et sa signature, avant et après la création du DMG. Il refuse ainsi un ancien
-bundle Apple Silicon ciblant macOS 26 passé avec `HUE_APP_PATH`.
+The DMG opens an illustrated installation window: Hue on the left, an arrow, and
+the Applications folder on the right. Only the app and the Applications link are
+visible. The guide is provided separately.
+The Retina background and Finder icon positions are generated without automating Finder.
+To reuse an installed tool, set `HUE_DMGBUILD` to its path.
+To rebuild only the DMG for an app that has already been built and signed,
+set `HUE_APP_PATH` to that bundle's path.
+The default output is `build/Hue-1.0-Universal.dmg`. Before and after creating the
+DMG, the script verifies that both architectures are present, that each targets
+macOS 13, and that the bundle's minimum version and signature are correct. It thus
+rejects an older Apple Silicon bundle targeting macOS 26 passed through `HUE_APP_PATH`.
 
-## Organisation
+## Project structure
 
-- Sources/CameraEngine.swift : autorisation, découverte USB, session vidéo, reconnexion.
-- Sources/ImagePipeline.swift : transformation unique pour aperçu/capture, PNG atomique.
-- Sources/AppModel.swift : préférences et captures en arrière-plan.
-- Sources/ContentView.swift : interface SwiftUI.
-- Sources/DockGeometry.swift : placement et aimantation du dock.
-- Sources/HueApp.swift : fenêtre et menus macOS.
+- Sources/CameraEngine.swift: permissions, USB discovery, video session, reconnection.
+- Sources/ImagePipeline.swift: shared preview/capture transformation, atomic PNG writes.
+- Sources/AppModel.swift: preferences and background capture saving.
+- Sources/ContentView.swift: SwiftUI interface.
+- Sources/DockGeometry.swift: dock placement and snapping.
+- Sources/HueApp.swift: macOS window and menus.
 
-L’image exportée provient de la même image rendue que l’aperçu. Les bandes de cadrage
-et les éléments d’interface ne sont pas enregistrés. Aucun microphone n’est ouvert.
+The exported image uses the same rendered image as the preview. Letterboxing and
+interface elements are not saved. No microphone is opened.
