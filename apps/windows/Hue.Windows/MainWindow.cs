@@ -96,6 +96,7 @@ internal sealed class MainWindow : Window
     private DockMotion? _snapMotion;
     private bool _renderingMotion;
     private int _renderedMotionFrames;
+    private bool _forceDockMotionForTest;
     private readonly TaskCompletionSource<bool> _firstFrame = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly object _frameGate = new();
     private SoftwareBitmap? _pendingFrame;
@@ -114,6 +115,8 @@ internal sealed class MainWindow : Window
     private int _frameWidth = 640;
     private int _frameHeight = 480;
     private CancellationTokenSource? _toastLifetime;
+
+    private bool DockAnimationsEnabled => (_options.SmokeTest && _forceDockMotionForTest) || _uiSettings.AnimationsEnabled;
 
     public MainWindow(LaunchOptions options)
     {
@@ -424,7 +427,7 @@ internal sealed class MainWindow : Window
         }
         DockPresentation target = AnchoredDock(_settings.DockEdge, _settings.IsDockCollapsed);
         SetDockInteraction();
-        if (animate && _uiSettings.AnimationsEnabled && _dockPresentation.Width > 0)
+        if (animate && DockAnimationsEnabled && _dockPresentation.Width > 0)
         {
             _dockMotion = new DockMotion(_dockPresentation, target, _motionClock.Elapsed.TotalSeconds,
                 dropping ? 0.42 : 0.36, dropping ? 0.82 : 0.88);
@@ -506,7 +509,7 @@ internal sealed class MainWindow : Window
         bool visible = _snapPreview.Visibility == Visibility.Visible;
         _snapPreview.Visibility = Visibility.Visible;
         if (visible && (_snapMotion?.Target.Edge ?? _snapPresentation.Edge) == edge) return;
-        if (visible && _uiSettings.AnimationsEnabled)
+        if (visible && DockAnimationsEnabled)
             _snapMotion = new DockMotion(_snapPresentation, target, _motionClock.Elapsed.TotalSeconds, 0.30, 0.82);
         else
         {
@@ -539,7 +542,7 @@ internal sealed class MainWindow : Window
     {
         _renderedMotionFrames++;
         double now = _motionClock.Elapsed.TotalSeconds;
-        bool finish = !_uiSettings.AnimationsEnabled;
+        bool finish = !DockAnimationsEnabled;
         if (_dockMotion is { } dockMotion)
         {
             ApplyDockPresentation(finish ? dockMotion.Target : dockMotion.Sample(now));
@@ -748,55 +751,80 @@ internal sealed class MainWindow : Window
 
     private async Task CheckDockMotionAsync()
     {
-        Brush surface = _dock.Background;
-        foreach (DockEdge edge in Enum.GetValues<DockEdge>())
+        // Exercise the user's actual preference first, including the instant
+        // accessibility path on Windows Server CI where animations are disabled.
+        _settings = _settings with { DockEdge = DockEdge.Right, IsDockCollapsed = false };
+        LayoutDock(false);
+        ToggleDock();
+        if (!_uiSettings.AnimationsEnabled && (_dockMotion is not null || _renderingMotion))
+            throw new InvalidOperationException("The dock ignored the system animation preference.");
+        await WaitForDockMotionAsync();
+        AssertDockPresentation();
+
+        // Force only this development check to exercise actual rendering frames.
+        // This changes no system setting and cannot affect a normal application run.
+        int initialFrameCount = _renderedMotionFrames;
+        _forceDockMotionForTest = true;
+        try
         {
-            _settings = _settings with { DockEdge = edge, IsDockCollapsed = false };
+            Brush surface = _dock.Background;
+            foreach (DockEdge edge in Enum.GetValues<DockEdge>())
+            {
+                _settings = _settings with { DockEdge = edge, IsDockCollapsed = false };
+                LayoutDock(false);
+                ToggleDock();
+                await WaitForDockMotionAsync();
+                AssertDockPresentation();
+                if (_grip.IsTabStop || _dockStack.IsHitTestVisible || !_expand.IsTabStop || _dockStack.Opacity != 0)
+                    throw new InvalidOperationException("Collapsed controls remain visible or interactive.");
+                if (AutomationProperties.GetAccessibilityView(_grip) != AccessibilityView.Raw)
+                    throw new InvalidOperationException("The hidden drag grip remains in the accessibility control view.");
+                ToggleDock();
+                await WaitForDockMotionAsync();
+                AssertDockPresentation();
+            }
+
+            // Reverse an in-flight fold from its displayed dimensions, not its old target.
+            ToggleDock();
+            await Task.Delay(35);
+            DockPresentation before = _dockPresentation;
+            ToggleDock();
+            if (DockAnimationsEnabled && _dockPresentation != before)
+                throw new InvalidOperationException("Retargeting a dock animation jumps its presentation.");
+            await Task.Delay(35);
+            ToggleDock();
+            await WaitForDockMotionAsync();
+            AssertDockPresentation();
+
+            _settings = _settings with { IsDockCollapsed = false };
             LayoutDock(false);
-            ToggleDock();
+            ShowSnapPreview(DockEdge.Top);
+            ShowSnapPreview(DockEdge.Right);
             await WaitForDockMotionAsync();
+            DockPresentation target = AnchoredDock(DockEdge.Right, false);
+            if (Math.Abs(_snapPresentation.X - target.X) > 0.01 || Math.Abs(_snapPresentation.Width - target.Width) > 0.01)
+                throw new InvalidOperationException("The animated snap preview did not reach its edge.");
+            HideSnapPreview();
+
+            _settings = _settings with { DockEdge = DockEdge.Bottom };
+            LayoutDock(true, dropping: true);
+            await Task.Delay(35);
+            // Window resizing takes this same immediate layout path and cancels motion.
+            LayoutDock(false);
             AssertDockPresentation();
-            if (_grip.IsTabStop || _dockStack.IsHitTestVisible || !_expand.IsTabStop || _dockStack.Opacity != 0)
-                throw new InvalidOperationException("Collapsed controls remain visible or interactive.");
-            if (AutomationProperties.GetAccessibilityView(_grip) != AccessibilityView.Raw)
-                throw new InvalidOperationException("The hidden drag grip remains in the accessibility control view.");
-            ToggleDock();
-            await WaitForDockMotionAsync();
-            AssertDockPresentation();
+            if (_dockMotion is not null || _snapMotion is not null || _renderingMotion)
+                throw new InvalidOperationException("Dock motion kept running after cancellation.");
+            if (!ReferenceEquals(surface, _dock.Background))
+                throw new InvalidOperationException("Dock transitions recreated their acrylic surface.");
+            if (_renderedMotionFrames <= initialFrameCount)
+                throw new InvalidOperationException("The dock checks did not render any animation frames.");
         }
-
-        // Reverse an in-flight fold from its displayed dimensions, not its old target.
-        ToggleDock();
-        await Task.Delay(35);
-        DockPresentation before = _dockPresentation;
-        ToggleDock();
-        if (_uiSettings.AnimationsEnabled && _dockPresentation != before)
-            throw new InvalidOperationException("Retargeting a dock animation jumps its presentation.");
-        await Task.Delay(35);
-        ToggleDock();
-        await WaitForDockMotionAsync();
-        AssertDockPresentation();
-
-        _settings = _settings with { IsDockCollapsed = false };
-        LayoutDock(false);
-        ShowSnapPreview(DockEdge.Top);
-        ShowSnapPreview(DockEdge.Right);
-        await WaitForDockMotionAsync();
-        DockPresentation target = AnchoredDock(DockEdge.Right, false);
-        if (Math.Abs(_snapPresentation.X - target.X) > 0.01 || Math.Abs(_snapPresentation.Width - target.Width) > 0.01)
-            throw new InvalidOperationException("The animated snap preview did not reach its edge.");
-        HideSnapPreview();
-
-        _settings = _settings with { DockEdge = DockEdge.Bottom };
-        LayoutDock(true, dropping: true);
-        await Task.Delay(35);
-        // Window resizing takes this same immediate layout path and cancels motion.
-        LayoutDock(false);
-        AssertDockPresentation();
-        if (_dockMotion is not null || _snapMotion is not null || _renderingMotion)
-            throw new InvalidOperationException("Dock motion kept running after cancellation.");
-        if (!ReferenceEquals(surface, _dock.Background))
-            throw new InvalidOperationException("Dock transitions recreated their acrylic surface.");
+        finally
+        {
+            _forceDockMotionForTest = false;
+            HideSnapPreview();
+            LayoutDock(false);
+        }
     }
 
     private async Task WaitForDockMotionAsync()

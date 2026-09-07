@@ -119,12 +119,12 @@ jobs:
             $process.Kill()
             throw 'The app did not finish its smoke test.'
           }
-          if ($process.ExitCode -ne 0) { throw "Smoke test failed with exit code $($process.ExitCode)." }
           $resultPath = Join-Path $capturePath 'smoke-result.json'
           if (-not (Test-Path $resultPath)) { throw 'The smoke test did not write its result.' }
           $result = Get-Content $resultPath -Raw | ConvertFrom-Json
-          if (-not $result.passed) { throw "Smoke test failed: $($result.error)" }
           Get-Content $resultPath
+          if ($process.ExitCode -ne 0) { throw "Smoke test failed with exit code $($process.ExitCode)." }
+          if (-not $result.passed) { throw "Smoke test failed: $($result.error)" }
       - name: Uninstall preview
         if: always()
         shell: pwsh
