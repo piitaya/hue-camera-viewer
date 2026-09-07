@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+REPOSITORY_DIR="$(cd "$PROJECT_DIR/../.." && pwd)"
 BUILD_DIR="${HUE_BUILD_DIR:-$PROJECT_DIR/build}"
 APP_DIR="$BUILD_DIR/Hue.app"
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources" "$BUILD_DIR/tool-module-cache"
@@ -15,10 +16,10 @@ lipo -create "$BUILD_DIR/slices/arm64/Hue" "$BUILD_DIR/slices/x86_64/Hue" \
     -output "$APP_DIR/Contents/MacOS/Hue"
 lipo "$APP_DIR/Contents/MacOS/Hue" -verify_arch arm64 x86_64
 cp "$PROJECT_DIR/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
-# Icon generation is a build-time tool for the current host, not part of the bundle.
+# Convert the shared icon into macOS sizes using a build-time tool for the host.
 xcrun swiftc -O -module-cache-path "$BUILD_DIR/tool-module-cache" \
     "$PROJECT_DIR/Scripts/MakeIcon.swift" -o "$BUILD_DIR/make-icon"
-"$BUILD_DIR/make-icon" "$BUILD_DIR/Hue.iconset"
+"$BUILD_DIR/make-icon" "$BUILD_DIR/Hue.iconset" "$REPOSITORY_DIR/assets/hue.png"
 iconutil -c icns "$BUILD_DIR/Hue.iconset" -o "$APP_DIR/Contents/Resources/Hue.icns"
 for localization in "$PROJECT_DIR"/Resources/*.lproj; do
     ditto "$localization" "$APP_DIR/Contents/Resources/$(basename "$localization")"

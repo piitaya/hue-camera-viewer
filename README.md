@@ -1,33 +1,28 @@
 # Hue
 
-A minimal macOS app for HUE and USB document cameras: live preview, 90° rotation,
+A minimal viewer for HUE and USB document cameras: live preview, 90° rotation,
 and PNG capture to the Desktop, with a movable, collapsible dock.
 
-**macOS 13+ · Intel and Apple Silicon · English and French**
+**English and French · Native apps for macOS and Windows**
+
+| App | Requirements | Development |
+| --- | --- | --- |
+| macOS | macOS 13+, Intel or Apple Silicon | [macOS guide](apps/macos/README.md) |
+| Windows preview | Windows 10 (2004)+ x64; Windows 11 x64 or ARM64 | [Windows guide](apps/windows/README.md) |
 
 ## Install
 
-Open the DMG, drag Hue to Applications, and launch it.
-Allow camera access when prompted.
+On macOS, open the DMG and drag Hue to Applications.
+On Windows, run `Hue-Setup.exe`, then open Hue from the Start menu.
+Connect your camera and allow camera access when prompted.
 
-## Development
+## Repository
 
-Requires Xcode with the macOS 26 SDK or later.
+- `apps/macos`: Swift app and DMG packaging.
+- `apps/windows`: C# app, tests, and Windows packaging.
+- `assets`: shared app icons.
 
-```sh
-bash Scripts/build.sh
-open build/Hue.app
-```
-
-Run tests with `bash Scripts/test.sh`.
-Use `open -na build/Hue.app --args --demo` to develop without a camera.
-
-## Create the DMG
-
-Requires Python 3.10 or later.
-
-```sh
-python3 -m venv .venv-dmg
-.venv-dmg/bin/python -m pip install -r Scripts/requirements-dmg.txt
-bash Scripts/package.sh
-```
+Pull requests and pushes to `main` build and test the affected apps, skipping documentation-only
+changes. Manual runs build both apps. Preview installers are available in the workflow's
+artifacts for three days.
+These CI builds are for testing; the macOS preview is not notarized.

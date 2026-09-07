@@ -71,6 +71,12 @@ final class CameraEngine: NSObject, ObservableObject {
                 self?.devicesChanged()
             })
         }
+        observers.append(center.addObserver(forName: NSApplication.didBecomeActiveNotification,
+                                             object: nil, queue: .main) { [weak self] _ in
+            guard let self, self.wantsRunning, self.state == .denied,
+                  AVCaptureDevice.authorizationStatus(for: .video) == .authorized else { return }
+            self.resumeSelectedCamera(preferHUE: true)
+        })
         observers.append(center.addObserver(forName: AVCaptureSession.runtimeErrorNotification,
                                              object: session, queue: .main) { [weak self] note in
             guard let self, self.wantsRunning else { return }
@@ -135,12 +141,6 @@ final class CameraEngine: NSObject, ObservableObject {
         precondition(Thread.isMainThread)
         wantsRunning = false
         suspend(.idle)
-    }
-
-    func retry() {
-        precondition(Thread.isMainThread)
-        stop()
-        start()
     }
 
     func selectCamera(id: String) {

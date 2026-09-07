@@ -12,7 +12,6 @@
 "Move to Top Edge" = "Placer en haut";
 "Move to Bottom Edge" = "Placer en bas";
 "No cameras available" = "Aucune caméra disponible";
-"Refresh Cameras" = "Actualiser les caméras";
 "Choose Camera\n%@" = "Choisir la caméra\n%@";
 "Choose Camera" = "Choisir la caméra";
 "No camera selected" = "Aucune caméra sélectionnée";
@@ -21,7 +20,6 @@
 "Capture to Desktop" = "Capturer sur le Bureau";
 "Show Controls" = "Afficher les commandes";
 "Open Settings" = "Ouvrir les réglages";
-"Try Again" = "Réessayer";
 "Connect your camera" = "Branchez votre caméra";
 "Allow camera access" = "Autorisez l’accès à la caméra";
 "Starting the camera…" = "La caméra démarre…";
