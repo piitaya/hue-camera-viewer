@@ -29,7 +29,7 @@ internal sealed class MainWindow : Window
 {
     private static class ThemeColors
     {
-        public static readonly global::Windows.UI.Color Terracotta = ColorHelper.FromArgb(255, 201, 93, 53);
+        public static readonly global::Windows.UI.Color Green = ColorHelper.FromArgb(255, 89, 180, 128);
     }
 
     private readonly LaunchOptions _options;
@@ -74,8 +74,8 @@ internal sealed class MainWindow : Window
     };
     private readonly Border _snapPreview = new()
     {
-        Background = new SolidColorBrush(ThemeColors.Terracotta) { Opacity = 45.0 / 255 },
-        BorderBrush = new SolidColorBrush(ThemeColors.Terracotta) { Opacity = 220.0 / 255 },
+        Background = new SolidColorBrush(ThemeColors.Green) { Opacity = 45.0 / 255 },
+        BorderBrush = new SolidColorBrush(ThemeColors.Green) { Opacity = 220.0 / 255 },
         BorderThickness = new Thickness(2), CornerRadius = new CornerRadius(30),
         IsHitTestVisible = false, Visibility = Visibility.Collapsed
     };

@@ -18,9 +18,9 @@ let graphics = NSGraphicsContext(cgContext: context, flipped: true)
 NSGraphicsContext.saveGraphicsState()
 NSGraphicsContext.current = graphics
 
-let ink = NSColor(srgbRed: 41 / 255, green: 37 / 255, blue: 33 / 255, alpha: 1)
-let secondary = NSColor(srgbRed: 0.43, green: 0.37, blue: 0.31, alpha: 1)
-let paper = NSColor(srgbRed: 1, green: 248 / 255, blue: 235 / 255, alpha: 1)
+let ink = NSColor(srgbRed: 0.12, green: 0.25, blue: 0.21, alpha: 1)
+let secondary = NSColor(srgbRed: 0.36, green: 0.42, blue: 0.37, alpha: 1)
+let paper = NSColor(srgbRed: 0.975, green: 0.98, blue: 0.96, alpha: 1)
 paper.setFill()
 NSBezierPath(rect: CGRect(origin: .zero, size: size)).fill()
 
@@ -38,13 +38,13 @@ text("Install Hue Camera Viewer", top: 44, size: 30, weight: .semibold, color: i
 text("Drag Hue to Applications.", top: 89, size: 15, weight: .regular, color: secondary)
 
 for center in [CGFloat(180), CGFloat(480)] {
-    NSColor(srgbRed: 245 / 255, green: 182 / 255, blue: 49 / 255, alpha: 0.12).setFill()
+    NSColor(srgbRed: 0.90, green: 0.94, blue: 0.89, alpha: 0.55).setFill()
     NSBezierPath(roundedRect: CGRect(x: center - 78, y: 149, width: 156, height: 158),
                  xRadius: 34, yRadius: 34).fill()
 }
 
 // A single generous arrow connects the real draggable Finder icons.
-NSColor(srgbRed: 201 / 255, green: 93 / 255, blue: 53 / 255, alpha: 1).setStroke()
+NSColor(srgbRed: 0.34, green: 0.57, blue: 0.43, alpha: 1).setStroke()
 let arrow = NSBezierPath()
 arrow.lineWidth = 3.5
 arrow.lineCapStyle = .round
