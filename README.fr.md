@@ -4,33 +4,59 @@
 
 [![Dernière version](https://img.shields.io/github/v/release/piitaya/hue-camera-viewer?display_name=tag&label=version)](https://github.com/piitaya/hue-camera-viewer/releases/latest)
 
-> Projet indépendant, non affilié à HUE. Cette application est compatible avec les caméras HUE.
+**[Télécharger pour macOS](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-macOS.dmg)** · **[Télécharger pour Windows](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-Windows.exe)** · [Toutes les versions](https://github.com/piitaya/hue-camera-viewer/releases)
 
 [English](README.md) | **Français**
 
-Une application simple pour les caméras de documents HUE et USB : affichage en direct,
-rotation, zoom et gel de l’image, et captures PNG enregistrées sur le Bureau, avec une barre d’outils
-déplaçable et repliable.
+Une application simple pour les caméras de documents HUE et USB. Branchez la caméra, montrez
+la page à l’écran ou au vidéoprojecteur, et enregistrez une image quand vous en avez besoin.
+Applications natives pour macOS et Windows, en français et en anglais.
 
-**Français et anglais · Applications natives pour macOS et Windows**
+> Projet indépendant, non affilié à HUE. Cette application est compatible avec les caméras HUE.
 
-| Système | Configuration requise |
-| --- | --- |
-| macOS | macOS 13 ou ultérieur, sur Mac Intel ou Apple Silicon |
-| Windows | Windows 10 (version 2004 ou ultérieure) sur x64 ; Windows 11 sur x64 ou ARM64 |
+<img src="assets/screenshot.png" width="700" alt="Hue Camera Viewer affichant une feuille avec des formes en bois, la barre d’outils en bas">
+
+## Fonctionnalités
+
+- Aperçu en direct de la caméra, plein cadre dans la fenêtre, avec la caméra HUE choisie automatiquement.
+- Rotation par quart de tour, mémorisée d’un lancement à l’autre.
+- Zoom de 100 à 400 % au curseur, à la molette ou au pincement sur le trackpad.
+- Gel de l’image le temps de tourner une page ; la caméra continue de tourner, la reprise est instantanée.
+- Captures PNG en pleine résolution, enregistrées sur le Bureau en un clic.
+- Une barre d’outils à déplacer sur n’importe quel bord de la fenêtre ou à masquer, avec un raccourci clavier pour tout.
 
 ## Installation
 
-**[Télécharger pour macOS](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-macOS.dmg)** · **[Télécharger pour Windows](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-Windows.exe)** · [Toutes les versions](https://github.com/piitaya/hue-camera-viewer/releases)
+**macOS 13 ou ultérieur**, Intel et Apple Silicon : ouvrez le DMG et glissez Hue dans le dossier
+Applications.
 
-Sur macOS, ouvrez le DMG et glissez Hue dans le dossier Applications.
-Sur Windows, lancez l’installateur `.exe`, puis ouvrez Hue depuis le menu Démarrer.
-Branchez votre caméra et autorisez son accès lorsque l’application le demande.
+**Windows 10 (2004) ou ultérieur**, x64 et ARM64 : lancez l’installateur, puis ouvrez Hue depuis
+le menu Démarrer. L’installateur n’est pas signé : si SmartScreen affiche un avertissement,
+choisissez « Informations complémentaires », puis « Exécuter quand même ».
 
-Les versions macOS publiées sont signées et notarisées. L’installateur Windows n’est pas signé
-et peut afficher un avertissement Microsoft SmartScreen : choisissez « Informations complémentaires »,
-puis « Exécuter quand même ». Des versions de test de chaque modification restent disponibles trois
-jours dans les artefacts [GitHub Actions](https://github.com/piitaya/hue-camera-viewer/actions/workflows/build.yml) ; ces aperçus macOS ne sont pas notarisés.
+Au premier lancement, autorisez l’accès à la caméra quand le système le demande. L’application
+choisit d’elle-même la caméra HUE quand elle est branchée ; le bouton caméra permet d’en choisir une autre.
+
+## Utilisation
+
+La barre d’outils est posée sur un bord de la fenêtre. Glissez sa poignée pour la déplacer vers
+un autre bord, et utilisez le chevron pour la masquer ou l’afficher.
+
+| Bouton | Ce qu’il fait |
+| --- | --- |
+| Caméra | Choisir la caméra ; ouvre aussi la liste des raccourcis clavier |
+| Tourner à gauche / à droite | Tourner l’image d’un quart de tour ; le choix est mémorisé |
+| Loupe | Zoomer l’aperçu de 100 à 400 % ; la molette et le pincement sur le trackpad zooment aussi, et une image zoomée se déplace à la souris |
+| Capture | Enregistrer un PNG en pleine résolution sur le Bureau |
+| Flocon | Figer l’image le temps de tourner une page ou de déplacer la caméra ; rotation, zoom et capture continuent de fonctionner sur l’image figée |
+
+| Action | macOS | Windows |
+| --- | --- | --- |
+| Capture sur le Bureau | ⌘S | Ctrl+S |
+| Tourner à gauche / à droite | ⌘← / ⌘→ | Ctrl+← / Ctrl+→ |
+| Zoom avant / arrière / 100 % | ⌘+ / ⌘− / ⌘0 | Ctrl++ / Ctrl+− / Ctrl+0 |
+| Figer ou reprendre l’image | ⌘F | Ctrl+F |
+| Masquer ou afficher la barre | ⌥⌘T | Ctrl+T |
 
 ## Caméras
 
@@ -47,6 +73,6 @@ Cette liste couvre des familles de caméras, pas tous les modèles testés. La c
 peut varier selon l’appareil ; les anciens modèles nécessitant un pilote propriétaire ne sont pas couverts.
 Hue Camera Viewer est un projet indépendant, non affilié à HUE ni aux autres fabricants de caméras cités ici.
 
-Pour le développement, consultez le [README en anglais](README.md#repository).
+Pour le développement, consultez le [README en anglais](README.md#development).
 
 Distribué sous [licence MIT](LICENSE).
