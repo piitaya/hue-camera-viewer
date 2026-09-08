@@ -15,6 +15,6 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../Hue.Core/Hue.Core.csproj" />
+    <ProjectReference Include="../Girafon.Core/Girafon.Core.csproj" />
   </ItemGroup>
 </Project>

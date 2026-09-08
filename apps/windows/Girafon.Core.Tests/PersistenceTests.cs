@@ -1,10 +1,10 @@
 using Xunit;
 
-namespace Hue.Core.Tests;
+namespace Girafon.Core.Tests;
 
 public sealed class PersistenceTests : IDisposable
 {
-    private readonly string directory = Path.Combine(Path.GetTempPath(), "Hue-Core-Tests", Guid.NewGuid().ToString("N"));
+    private readonly string directory = Path.Combine(Path.GetTempPath(), "Girafon-Core-Tests", Guid.NewGuid().ToString("N"));
 
     [Fact]
     public void SettingsSurviveRestartWithAllUserChoices()

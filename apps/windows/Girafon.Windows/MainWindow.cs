@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Numerics;
 using System.Text.Json;
-using Hue.Core;
-using Hue.Windows.Services;
+using Girafon.Core;
+using Girafon.Windows.Services;
 using Microsoft.UI;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
@@ -23,10 +23,20 @@ using Windows.System;
 using Windows.UI.ViewManagement;
 using Path = System.IO.Path;
 
-namespace Hue.Windows;
+namespace Girafon.Windows;
 
 internal sealed class MainWindow : Window
 {
+    private static class ThemeColors
+    {
+        public static readonly global::Windows.UI.Color Honey = ColorHelper.FromArgb(255, 245, 182, 49);
+        public static readonly global::Windows.UI.Color HoneyHover = ColorHelper.FromArgb(255, 255, 202, 90);
+        public static readonly global::Windows.UI.Color HoneyPressed = ColorHelper.FromArgb(255, 219, 152, 31);
+        public static readonly global::Windows.UI.Color HoneyDisabled = ColorHelper.FromArgb(255, 212, 194, 154);
+        public static readonly global::Windows.UI.Color Terracotta = ColorHelper.FromArgb(255, 201, 93, 53);
+        public static readonly global::Windows.UI.Color Ink = ColorHelper.FromArgb(255, 41, 37, 33);
+    }
+
     private readonly LaunchOptions _options;
     private readonly CameraService _camera = new();
     private readonly SettingsStore _settingsStore = new();
@@ -64,8 +74,8 @@ internal sealed class MainWindow : Window
     };
     private readonly Border _snapPreview = new()
     {
-        Background = new SolidColorBrush(ColorHelper.FromArgb(45, 134, 216, 181)),
-        BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(220, 134, 216, 181)),
+        Background = new SolidColorBrush(ThemeColors.Terracotta) { Opacity = 45.0 / 255 },
+        BorderBrush = new SolidColorBrush(ThemeColors.Terracotta) { Opacity = 220.0 / 255 },
         BorderThickness = new Thickness(2), CornerRadius = new CornerRadius(30),
         IsHitTestVisible = false, Visibility = Visibility.Collapsed
     };
@@ -122,9 +132,9 @@ internal sealed class MainWindow : Window
     {
         _options = options;
         _settings = options.Demo ? new AppSettings() : _settingsStore.Load();
-        Title = "Hue";
+        Title = "Girafon";
         AppWindow.Resize(new global::Windows.Graphics.SizeInt32(1120, 780));
-        string icon = Path.Combine(AppContext.BaseDirectory, "Assets", "Hue.ico");
+        string icon = Path.Combine(AppContext.BaseDirectory, "Assets", "Girafon.ico");
         if (File.Exists(icon)) AppWindow.SetIcon(icon);
 
         _preview.Source = _source;
@@ -158,9 +168,10 @@ internal sealed class MainWindow : Window
         _rotateRight = MakeButton("Rotate right", MakeGlyph("M 20 10 A 8 8 0 1 0 19 18 M 20 4 V 10 H 14"));
         _rotateRight.Click += (_, _) => Rotate(1);
         _capture = MakeButton("Capture image", MakeGlyph("M 4 6 H 7 L 9 3 H 15 L 17 6 H 20 Q 22 6 22 8 V 19 Q 22 21 20 21 H 4 Q 2 21 2 19 V 8 Q 2 6 4 6 Z M 16 13 A 4 4 0 1 1 8 13 A 4 4 0 1 1 16 13", true));
-        _capture.Background = new SolidColorBrush(ColorHelper.FromArgb(255, 134, 216, 181));
-        _capture.Resources["ButtonBackgroundPointerOver"] = new SolidColorBrush(ColorHelper.FromArgb(255, 160, 231, 200));
-        _capture.Resources["ButtonBackgroundPressed"] = new SolidColorBrush(ColorHelper.FromArgb(255, 107, 193, 157));
+        _capture.Background = new SolidColorBrush(ThemeColors.Honey);
+        _capture.Resources["ButtonBackgroundPointerOver"] = new SolidColorBrush(ThemeColors.HoneyHover);
+        _capture.Resources["ButtonBackgroundPressed"] = new SolidColorBrush(ThemeColors.HoneyPressed);
+        _capture.Resources["ButtonBackgroundDisabled"] = new SolidColorBrush(ThemeColors.HoneyDisabled);
         _capture.Click += async (_, _) => await CaptureAsync();
         Canvas chevron = MakeGlyph("M 8 5 L 15 12 L 8 19");
         chevron.RenderTransform = _chevronRotation;
@@ -636,7 +647,7 @@ internal sealed class MainWindow : Window
     {
         Canvas canvas = new() { Width = 24, Height = 24 };
         var path = (Microsoft.UI.Xaml.Shapes.Path)XamlReader.Load($"<Path xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' Data='{data}' StrokeThickness='1.9' StrokeLineJoin='Round' StrokeStartLineCap='Round' StrokeEndLineCap='Round' />");
-        if (capture) path.Stroke = new SolidColorBrush(ColorHelper.FromArgb(255, 14, 40, 31));
+        if (capture) path.Stroke = new SolidColorBrush(ThemeColors.Ink);
         else _themeShapes.Add(path);
         canvas.Children.Add(path);
         return canvas;

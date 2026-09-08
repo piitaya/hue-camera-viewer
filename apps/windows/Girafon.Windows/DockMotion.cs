@@ -1,6 +1,6 @@
-using Hue.Core;
+using Girafon.Core;
 
-namespace Hue.Windows;
+namespace Girafon.Windows;
 
 internal readonly record struct DockPresentation(DockEdge Edge, double X, double Y, double Width, double Height,
     double ExpandedOpacity, double CollapsedOpacity);

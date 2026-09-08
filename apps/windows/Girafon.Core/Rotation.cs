@@ -1,4 +1,4 @@
-namespace Hue.Core;
+namespace Girafon.Core;
 
 public static class Rotation
 {

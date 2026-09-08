@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Graphics.Imaging;
 
-namespace Hue.Windows.Services;
+namespace Girafon.Windows.Services;
 
 internal static class DemoImage
 {

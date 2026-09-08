@@ -6,17 +6,17 @@
 #endif
 
 [Setup]
-AppId={{ADB72C20-A36B-497A-9876-47A9D381EC49}
-AppName=Hue Camera Viewer
+AppId={{E4019837-B47D-43AD-A263-1AD79EBBDD30}
+AppName=Girafon
 AppVersion={#AppVersion}
-DefaultDirName={localappdata}\Programs\Hue
+DefaultDirName={localappdata}\Programs\Girafon
 PrivilegesRequired=lowest
 DisableDirPage=yes
 DisableProgramGroupPage=yes
-UninstallDisplayName=Hue
-UninstallDisplayIcon={app}\Hue.exe
+UninstallDisplayName=Girafon
+UninstallDisplayIcon={app}\Girafon.exe
 OutputDir={#OutputDirectory}
-OutputBaseFilename=Hue-Setup
+OutputBaseFilename=Girafon-Setup
 SetupIconFile={#SetupIconPath}
 Compression=lzma2
 SolidCompression=yes
@@ -34,8 +34,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 
 [CustomMessages]
-english.Arm64WindowsVersionRequired=Hue requires Windows 11 or later on ARM64 computers.
-french.Arm64WindowsVersionRequired=Hue nécessite Windows 11 ou une version ultérieure sur les ordinateurs ARM64.
+english.Arm64WindowsVersionRequired=Girafon requires Windows 11 or later on ARM64 computers.
+french.Arm64WindowsVersionRequired=Girafon nécessite Windows 11 ou une version ultérieure sur les ordinateurs ARM64.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -45,11 +45,11 @@ Source: "{#X64AppDirectory}\*"; DestDir: "{app}"; Check: not IsArm64; Flags: ign
 Source: "{#Arm64AppDirectory}\*"; DestDir: "{app}"; Check: IsArm64; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{userprograms}\Hue"; Filename: "{app}\Hue.exe"; WorkingDir: "{app}"
-Name: "{userdesktop}\Hue"; Filename: "{app}\Hue.exe"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{userprograms}\Girafon"; Filename: "{app}\Girafon.exe"; WorkingDir: "{app}"
+Name: "{userdesktop}\Girafon"; Filename: "{app}\Girafon.exe"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\Hue.exe"; Description: "{cm:LaunchProgram,Hue}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Girafon.exe"; Description: "{cm:LaunchProgram,Girafon}"; Flags: nowait postinstall skipifsilent
 
 [Code]
 function InitializeSetup: Boolean;

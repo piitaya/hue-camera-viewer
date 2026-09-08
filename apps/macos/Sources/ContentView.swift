@@ -1,7 +1,9 @@
 import AppKit
 import SwiftUI
 
-private let dockAccent = Color(red: 0.64, green: 0.90, blue: 0.79)
+private let dockAccent = Color(red: 245 / 255, green: 182 / 255, blue: 49 / 255)
+private let dockSecondaryAccent = Color(red: 201 / 255, green: 93 / 255, blue: 53 / 255)
+private let captureInk = Color(red: 41 / 255, green: 37 / 255, blue: 33 / 255)
 private let stageColor = Color(red: 0.045, green: 0.05, blue: 0.055)
 private let forceClassicDock = ProcessInfo.processInfo.arguments.contains("--classic-dock")
 
@@ -79,7 +81,7 @@ struct ContentView: View {
             if let target = previewEdge, dragCenter != nil, model.isToolbarVisible {
                 let targetSize = dockSize(for: target)
                 RoundedRectangle(cornerRadius: 29)
-                    .fill(dockAccent.opacity(0.16))
+                    .fill(dockSecondaryAccent.opacity(0.16))
                     .overlay {
                         RoundedRectangle(cornerRadius: 29)
                             .strokeBorder(.black.opacity(0.45), lineWidth: 3)
@@ -267,7 +269,7 @@ struct ContentView: View {
                 } else {
                     Image(systemName: "camera.fill")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(model.canRequestCapture ? stageColor : Color.secondary)
+                        .foregroundStyle(model.canRequestCapture ? captureInk : Color.secondary)
                 }
             }
             .frame(width: 42, height: 42)
@@ -333,13 +335,13 @@ struct ContentView: View {
     private var emptyMessage: String {
         switch camera.state {
         case .idle, .noCamera:
-            return NSLocalizedString("Connect your HUE camera to a USB port on your Mac.", comment: "Camera empty state")
+            return NSLocalizedString("Connect your camera to a USB port on your Mac.", comment: "Camera empty state")
         case .requestingPermission:
             return NSLocalizedString("Allow access when macOS asks to show the preview.", comment: "Camera empty state")
         case .starting, .running:
             return NSLocalizedString("Preparing the preview.", comment: "Camera empty state")
         case .denied:
-            return NSLocalizedString("Enable Hue in System Settings → Privacy & Security → Camera.", comment: "Camera empty state")
+            return NSLocalizedString("Enable Girafon in System Settings → Privacy & Security → Camera.", comment: "Camera empty state")
         case .failed(let message):
             return message
         }

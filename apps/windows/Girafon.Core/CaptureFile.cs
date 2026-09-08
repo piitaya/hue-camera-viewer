@@ -1,4 +1,4 @@
-namespace Hue.Core;
+namespace Girafon.Core;
 
 public static class CaptureFile
 {
@@ -6,7 +6,7 @@ public static class CaptureFile
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(directory);
         Directory.CreateDirectory(directory);
-        var stem = $"Hue-{DateTime.Now:yyyy-MM-dd-HHmmss-fff}-{Guid.NewGuid():N}";
+        var stem = $"Girafon-{DateTime.Now:yyyy-MM-dd-HHmmss-fff}-{Guid.NewGuid():N}";
         var destination = Path.Combine(directory, stem + ".png");
         var temporary = Path.Combine(directory, "." + stem + ".tmp");
         try

@@ -1,4 +1,4 @@
-namespace Hue.Windows;
+namespace Girafon.Windows;
 
 internal sealed record LaunchOptions(bool Demo, bool SmokeTest, string? CaptureDirectory)
 {
@@ -9,7 +9,7 @@ internal sealed record LaunchOptions(bool Demo, bool SmokeTest, string? CaptureD
         int directoryIndex = Array.IndexOf(arguments, "--capture-directory");
         string? directory = directoryIndex >= 0 && directoryIndex + 1 < arguments.Length
             ? Path.GetFullPath(arguments[directoryIndex + 1])
-            : demo ? Path.Combine(Path.GetTempPath(), "Hue-Demo", Guid.NewGuid().ToString("N")) : null;
+            : demo ? Path.Combine(Path.GetTempPath(), "Girafon-Demo", Guid.NewGuid().ToString("N")) : null;
         return new(demo, smoke, directory);
     }
 }

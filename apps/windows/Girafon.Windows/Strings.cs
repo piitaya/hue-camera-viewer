@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Hue.Windows;
+namespace Girafon.Windows;
 
 internal static class Strings
 {

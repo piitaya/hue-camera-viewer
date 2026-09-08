@@ -1,12 +1,11 @@
-# Hue Camera Viewer
+# Girafon
 
-> Projet indépendant, non affilié à HUE. Cette application est compatible avec les caméras HUE.
+<img src="assets/girafon.png" width="96" alt="Icône de Girafon">
 
 [English](README.md) | **Français**
 
-Une application simple pour les caméras de documents HUE et USB : affichage en direct,
-rotation à 90° et captures PNG enregistrées sur le Bureau, avec une barre d’outils
-déplaçable et repliable.
+Un visualiseur de documents simple : affichage en direct, rotation à 90° et captures
+PNG enregistrées sur le Bureau, avec une barre d’outils déplaçable et repliable.
 
 **Français et anglais · Applications natives pour macOS et Windows**
 
@@ -17,13 +16,29 @@ déplaçable et repliable.
 
 ## Installation
 
-**[Télécharger pour macOS](https://github.com/piitaya/hue-camera-viewer/releases/download/v1.0.0-beta.1/Hue-Camera-Viewer-1.0-Universal.dmg)** · **[Télécharger pour Windows](https://github.com/piitaya/hue-camera-viewer/releases/download/v1.0.0-beta.1/Hue-Setup.exe)**
-
-Sur macOS, ouvrez le fichier DMG et glissez Hue dans le dossier Applications.
-Sur Windows, lancez `Hue-Setup.exe`, puis ouvrez Hue depuis le menu Démarrer.
+Téléchargez les installateurs de test Girafon depuis une [compilation GitHub Actions réussie](https://github.com/piitaya/girafon/actions/workflows/build.yml).
+Sur macOS, ouvrez le DMG et glissez Girafon dans le dossier Applications.
+Sur Windows, lancez `Girafon-Setup.exe`, puis ouvrez Girafon depuis le menu Démarrer.
 Branchez votre caméra et autorisez son accès lorsque l’application le demande.
 
-L’installateur Windows n’est pas signé et peut afficher un avertissement Microsoft SmartScreen.
+Ces versions servent aux tests : la version macOS n’est pas notarisée et l’installateur
+Windows non signé peut afficher un avertissement Microsoft SmartScreen.
+Les [versions publiées](https://github.com/piitaya/girafon/releases) restent disponibles séparément.
+
+## Caméras
+
+Girafon utilise les caméras accessibles depuis le système d’exploitation.
+
+| Famille de caméras | Connexion |
+| --- | --- |
+| [HUE HD Pro](https://huehd.com/pro/) (1080p) | USB UVC |
+| [HUE HD](https://huehd.com/products/hue-hd-camera/) (modèles UVC 720p et 1080p) | USB UVC |
+| Autres webcams et visualiseurs USB | Vidéo UVC standard |
+| Caméras intégrées aux Mac et PC | Prise en charge par le système |
+
+Cette liste couvre des familles de caméras, pas tous les modèles testés. La compatibilité
+peut varier selon l’appareil ; les anciens modèles nécessitant un pilote propriétaire ne sont pas couverts.
+Girafon est un projet indépendant, non affilié aux fabricants de caméras cités ici.
 
 Pour le développement, consultez le [README en anglais](README.md#repository).
 

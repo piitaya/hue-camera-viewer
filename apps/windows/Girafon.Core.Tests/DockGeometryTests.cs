@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Hue.Core.Tests;
+namespace Girafon.Core.Tests;
 
 public sealed class DockGeometryTests
 {

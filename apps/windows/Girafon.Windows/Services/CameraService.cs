@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices.WindowsRuntime;
-using Hue.Core;
+using Girafon.Core;
 using Microsoft.UI.Dispatching;
 using Windows.Devices.Enumeration;
 using Windows.Graphics.Imaging;
@@ -9,7 +9,7 @@ using Windows.Media.Capture.Frames;
 using Windows.Media.MediaProperties;
 using Windows.Storage.Streams;
 
-namespace Hue.Windows.Services;
+namespace Girafon.Windows.Services;
 
 // Construct and control the service on the UI thread. FrameReady runs on a camera thread;
 // its single consumer owns the bitmap and must dispose it after presentation.
@@ -106,7 +106,7 @@ public sealed class CameraService : IAsyncDisposable
         using (snapshot)
         {
             directory ??= demo
-                ? Path.Combine(Path.GetTempPath(), "Hue-Demo")
+                ? Path.Combine(Path.GetTempPath(), "Girafon-Demo")
                 : Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
             if (string.IsNullOrWhiteSpace(directory))
                 throw new IOException("The Desktop folder is unavailable.");
@@ -283,7 +283,7 @@ public sealed class CameraService : IAsyncDisposable
         var devices = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
         Devices = devices.Select(device => new CameraChoice(device.Id, device.Name,
             device.EnclosureLocation is null || device.EnclosureLocation.Panel == Panel.Unknown))
-            .OrderByDescending(device => device.IsHue)
+            .OrderByDescending(device => device.IsPreferredDocumentCamera)
             .ThenBy(device => device.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
         DevicesChanged?.Invoke(Devices);

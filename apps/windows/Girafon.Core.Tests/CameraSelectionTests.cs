@@ -1,19 +1,19 @@
 using Xunit;
 
-namespace Hue.Core.Tests;
+namespace Girafon.Core.Tests;
 
 public sealed class CameraSelectionTests
 {
     private static readonly CameraChoice BuiltIn = new("internal", "Face camera", false);
     private static readonly CameraChoice External = new("usb", "USB camera");
-    private static readonly CameraChoice Hue = new("hue", "HUE Pro");
+    private static readonly CameraChoice DocumentCamera = new("document-camera", "HUE Pro");
 
     [Fact]
-    public void HueWinsOverRememberedAndBuiltInCameras()
-        => Assert.Equal(Hue, CameraSelection.SelectInitial([BuiltIn, External, Hue], BuiltIn.Id));
+    public void DocumentCameraWinsOverRememberedAndBuiltInCameras()
+        => Assert.Equal(DocumentCamera, CameraSelection.SelectInitial([BuiltIn, External, DocumentCamera], BuiltIn.Id));
 
     [Fact]
-    public void RememberedCameraWinsWhenNoHueIsAvailable()
+    public void RememberedCameraWinsWhenNoDocumentCameraIsAvailable()
         => Assert.Equal(BuiltIn, CameraSelection.SelectInitial([External, BuiltIn], BuiltIn.Id));
 
     [Fact]
@@ -26,24 +26,24 @@ public sealed class CameraSelectionTests
 
     [Fact]
     public void UnpluggingSelectedCameraNeverSwitchesToAnotherCamera()
-        => Assert.Null(CameraSelection.SelectAfterDeviceChange([BuiltIn, External], Hue.Id));
+        => Assert.Null(CameraSelection.SelectAfterDeviceChange([BuiltIn, External], DocumentCamera.Id));
 
     [Fact]
     public void ReconnectingSameCameraRestoresThatCamera()
         => Assert.Equal(External, CameraSelection.SelectAfterDeviceChange([BuiltIn, External], External.Id));
 
     [Fact]
-    public void ConnectingHuePromotesItOverTheBuiltInCamera()
-        => Assert.Equal(Hue, CameraSelection.SelectAfterDeviceChange([BuiltIn, Hue], BuiltIn.Id));
+    public void ConnectingDocumentCameraPromotesItOverTheBuiltInCamera()
+        => Assert.Equal(DocumentCamera, CameraSelection.SelectAfterDeviceChange([BuiltIn, DocumentCamera], BuiltIn.Id));
 
     [Fact]
-    public void AConnectedHueCanReplaceAnUnpluggedExternalCamera()
-        => Assert.Equal(Hue, CameraSelection.SelectAfterDeviceChange([BuiltIn, Hue], External.Id));
+    public void AConnectedDocumentCameraCanReplaceAnUnpluggedExternalCamera()
+        => Assert.Equal(DocumentCamera, CameraSelection.SelectAfterDeviceChange([BuiltIn, DocumentCamera], External.Id));
 
     [Fact]
     public void StartingWithoutDevicesAllowsTheFirstConnectedCamera()
     {
         Assert.Null(CameraSelection.SelectInitial([], null));
-        Assert.Equal(Hue, CameraSelection.SelectAfterDeviceChange([BuiltIn, Hue], null));
+        Assert.Equal(DocumentCamera, CameraSelection.SelectAfterDeviceChange([BuiltIn, DocumentCamera], null));
     }
 }

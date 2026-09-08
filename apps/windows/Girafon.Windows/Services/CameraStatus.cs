@@ -1,4 +1,4 @@
-namespace Hue.Windows.Services;
+namespace Girafon.Windows.Services;
 
 public enum CameraState { Starting, Streaming, NoCamera, Disconnected, AccessDenied, Busy, Error }
 

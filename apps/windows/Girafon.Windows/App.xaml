@@ -1,5 +1,5 @@
 <Application
-    x:Class="Hue.Windows.App"
+    x:Class="Girafon.Windows.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Application.Resources>

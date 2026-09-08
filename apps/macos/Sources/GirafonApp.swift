@@ -2,12 +2,12 @@ import AppKit
 import SwiftUI
 
 @main
-struct HueApp: App {
+struct GirafonApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @StateObject private var model = AppModel()
 
     var body: some Scene {
-        Window("Hue", id: "main") {
+        Window("Girafon", id: "main") {
             ContentView(model: model, camera: model.camera)
                 .frame(minWidth: 520, minHeight: 520)
                 .onAppear { model.camera.start() }
@@ -32,9 +32,9 @@ struct HueApp: App {
                 Button(model.isToolbarVisible ? NSLocalizedString("Hide Controls", comment: "Image menu when controls are visible") : NSLocalizedString("Show Controls", comment: "Image menu when controls are hidden")) { model.toggleToolbar() }
             }
             CommandGroup(replacing: .help) {
-                Button("About Hue") {
+                Button("About Girafon") {
                     NSApp.orderFrontStandardAboutPanel(options: [
-                        .applicationName: "Hue",
+                        .applicationName: "Girafon",
                         .applicationVersion: "1.0",
                         .version: "1",
                         .credits: NSAttributedString(string: NSLocalizedString("A simple viewer for your documents.\nCamera • Rotation • Capture to Desktop", comment: "About panel description"))

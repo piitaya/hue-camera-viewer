@@ -1,6 +1,6 @@
 using Microsoft.UI.Xaml;
 
-namespace Hue.Windows;
+namespace Girafon.Windows;
 
 public partial class App : Application
 {

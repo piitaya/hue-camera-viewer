@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Hue.Core;
+namespace Girafon.Core;
 
 public sealed record AppSettings
 {
@@ -25,7 +25,7 @@ public sealed class SettingsStore
     public SettingsStore(string? filePath = null)
     {
         this.filePath = filePath ?? Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Hue", "settings.json");
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Girafon", "settings.json");
     }
 
     public AppSettings Load()
