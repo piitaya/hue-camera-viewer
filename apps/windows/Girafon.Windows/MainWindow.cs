@@ -29,12 +29,7 @@ internal sealed class MainWindow : Window
 {
     private static class ThemeColors
     {
-        public static readonly global::Windows.UI.Color Honey = ColorHelper.FromArgb(255, 245, 182, 49);
-        public static readonly global::Windows.UI.Color HoneyHover = ColorHelper.FromArgb(255, 255, 202, 90);
-        public static readonly global::Windows.UI.Color HoneyPressed = ColorHelper.FromArgb(255, 219, 152, 31);
-        public static readonly global::Windows.UI.Color HoneyDisabled = ColorHelper.FromArgb(255, 212, 194, 154);
         public static readonly global::Windows.UI.Color Terracotta = ColorHelper.FromArgb(255, 201, 93, 53);
-        public static readonly global::Windows.UI.Color Ink = ColorHelper.FromArgb(255, 41, 37, 33);
     }
 
     private readonly LaunchOptions _options;
@@ -167,11 +162,7 @@ internal sealed class MainWindow : Window
         _rotateLeft.Click += (_, _) => Rotate(-1);
         _rotateRight = MakeButton("Rotate right", MakeGlyph("M 20 10 A 8 8 0 1 0 19 18 M 20 4 V 10 H 14"));
         _rotateRight.Click += (_, _) => Rotate(1);
-        _capture = MakeButton("Capture image", MakeGlyph("M 4 6 H 7 L 9 3 H 15 L 17 6 H 20 Q 22 6 22 8 V 19 Q 22 21 20 21 H 4 Q 2 21 2 19 V 8 Q 2 6 4 6 Z M 16 13 A 4 4 0 1 1 8 13 A 4 4 0 1 1 16 13", true));
-        _capture.Background = new SolidColorBrush(ThemeColors.Honey);
-        _capture.Resources["ButtonBackgroundPointerOver"] = new SolidColorBrush(ThemeColors.HoneyHover);
-        _capture.Resources["ButtonBackgroundPressed"] = new SolidColorBrush(ThemeColors.HoneyPressed);
-        _capture.Resources["ButtonBackgroundDisabled"] = new SolidColorBrush(ThemeColors.HoneyDisabled);
+        _capture = MakeButton("Capture image", MakeGlyph("M 4 6 H 7 L 9 3 H 15 L 17 6 H 20 Q 22 6 22 8 V 19 Q 22 21 20 21 H 4 Q 2 21 2 19 V 8 Q 2 6 4 6 Z M 16 13 A 4 4 0 1 1 8 13 A 4 4 0 1 1 16 13"));
         _capture.Click += async (_, _) => await CaptureAsync();
         Canvas chevron = MakeGlyph("M 8 5 L 15 12 L 8 19");
         chevron.RenderTransform = _chevronRotation;
@@ -643,12 +634,11 @@ internal sealed class MainWindow : Window
         }
     }
 
-    private Canvas MakeGlyph(string data, bool capture = false)
+    private Canvas MakeGlyph(string data)
     {
         Canvas canvas = new() { Width = 24, Height = 24 };
         var path = (Microsoft.UI.Xaml.Shapes.Path)XamlReader.Load($"<Path xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' Data='{data}' StrokeThickness='1.9' StrokeLineJoin='Round' StrokeStartLineCap='Round' StrokeEndLineCap='Round' />");
-        if (capture) path.Stroke = new SolidColorBrush(ThemeColors.Ink);
-        else _themeShapes.Add(path);
+        _themeShapes.Add(path);
         canvas.Children.Add(path);
         return canvas;
     }

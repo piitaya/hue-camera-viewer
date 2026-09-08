@@ -3,7 +3,6 @@ import SwiftUI
 
 private let dockAccent = Color(red: 245 / 255, green: 182 / 255, blue: 49 / 255)
 private let dockSecondaryAccent = Color(red: 201 / 255, green: 93 / 255, blue: 53 / 255)
-private let captureInk = Color(red: 41 / 255, green: 37 / 255, blue: 33 / 255)
 private let stageColor = Color(red: 0.045, green: 0.05, blue: 0.055)
 private let forceClassicDock = ProcessInfo.processInfo.arguments.contains("--classic-dock")
 
@@ -14,6 +13,7 @@ struct ContentView: View {
     @State private var dragCenter: CGPoint?
     @State private var previewEdge: DockEdge?
     @State private var gripHovered = false
+    @State private var captureHovered = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -263,13 +263,13 @@ struct ContentView: View {
     private var captureButton: some View {
         Button(action: model.capture) {
             ZStack {
-                Circle().fill(model.canRequestCapture ? dockAccent : Color.primary.opacity(0.12))
+                Circle().fill(.primary.opacity(captureHovered && model.canRequestCapture ? 0.08 : 0))
                 if model.isSaving {
                     ProgressView().controlSize(.small).tint(.primary)
                 } else {
-                    Image(systemName: "camera.fill")
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(model.canRequestCapture ? captureInk : Color.secondary)
+                    Image(systemName: "camera")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundStyle(model.canRequestCapture ? Color.primary : Color.secondary)
                 }
             }
             .frame(width: 42, height: 42)
@@ -277,6 +277,7 @@ struct ContentView: View {
         }
         .buttonStyle(.plain)
         .disabled(!model.canRequestCapture)
+        .onHover { captureHovered = $0 }
         .help("Save a Capture to the Desktop")
         .accessibilityLabel(model.isSaving ? NSLocalizedString("Saving", comment: "Capture button while saving") : NSLocalizedString("Capture to Desktop", comment: "Capture button accessibility label"))
     }
