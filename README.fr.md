@@ -22,12 +22,13 @@ déplaçable et repliable.
 **[Télécharger pour macOS](https://github.com/piitaya/hue-camera-viewer/releases/latest)** · **[Télécharger pour Windows](https://github.com/piitaya/hue-camera-viewer/releases/latest)**
 
 Sur macOS, ouvrez le DMG et glissez Hue dans le dossier Applications.
-Sur Windows, lancez `Hue-Setup.exe`, puis ouvrez Hue depuis le menu Démarrer.
+Sur Windows, lancez l’installateur `.exe`, puis ouvrez Hue depuis le menu Démarrer.
 Branchez votre caméra et autorisez son accès lorsque l’application le demande.
 
-L’application macOS n’est pas notarisée et l’installateur Windows non signé peut afficher
-un avertissement Microsoft SmartScreen. Des versions de test de chaque modification restent
-disponibles trois jours dans les artefacts [GitHub Actions](https://github.com/piitaya/hue-camera-viewer/actions/workflows/build.yml).
+Les versions macOS publiées sont signées et notarisées. L’installateur Windows n’est pas signé
+et peut afficher un avertissement Microsoft SmartScreen : choisissez « Informations complémentaires »,
+puis « Exécuter quand même ». Des versions de test de chaque modification restent disponibles trois
+jours dans les artefacts [GitHub Actions](https://github.com/piitaya/hue-camera-viewer/actions/workflows/build.yml) ; ces aperçus macOS ne sont pas notarisés.
 
 ## Caméras
 

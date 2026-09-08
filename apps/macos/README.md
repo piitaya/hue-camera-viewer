@@ -54,3 +54,24 @@ python3 -m venv .venv-dmg
 .venv-dmg/bin/python -m pip install -r Scripts/requirements-dmg.txt
 bash Scripts/package.sh
 ```
+
+The DMG is written to `build/Hue-Camera-Viewer-<version>-macOS.dmg`, with the version from
+`Resources/Info.plist`. Set `HUE_SIGNING_IDENTITY` to a Developer ID identity to sign the app
+with a secure timestamp; without it the app is signed ad hoc and cannot be notarized.
+
+## Release signing
+
+The [release workflow](../../.github/workflows/release.yml) signs the app and the DMG with a
+Developer ID certificate, notarizes the DMG and staples the ticket. It needs these repository
+secrets, all from an Apple Developer Program account:
+
+| Secret | Content |
+| --- | --- |
+| `APPLE_CERTIFICATE_P12` | The "Developer ID Application" certificate with its private key, exported from Keychain Access as a `.p12`, encoded with `base64 -i certificate.p12` |
+| `APPLE_CERTIFICATE_PASSWORD` | The password chosen when exporting the `.p12` |
+| `APPLE_NOTARY_KEY` | The content of the App Store Connect API key file (`AuthKey_XXXXXXXXXX.p8`), created under Users and Access → Integrations → Team Keys with the Developer role |
+| `APPLE_NOTARY_KEY_ID` | The Key ID shown next to that key |
+| `APPLE_NOTARY_ISSUER_ID` | The Issuer ID shown at the top of the same page |
+
+The workflow imports the certificate into a temporary keychain that it deletes at the end, and
+the Team ID is read from the certificate itself.

@@ -42,7 +42,13 @@ done
 
 SIGNING_IDENTITY="${HUE_SIGNING_IDENTITY:--}"
 # Sign only after both architectures and all resources have been assembled.
-codesign --force --options runtime --entitlements "$PROJECT_DIR/Resources/Hue.entitlements" \
-    --sign "$SIGNING_IDENTITY" "$APP_DIR"
+# Notarization needs a secure timestamp, which ad-hoc signatures cannot carry.
+if [[ "$SIGNING_IDENTITY" == "-" ]]; then
+    codesign --force --options runtime --entitlements "$PROJECT_DIR/Resources/Hue.entitlements" \
+        --sign - "$APP_DIR"
+else
+    codesign --force --options runtime --timestamp --entitlements "$PROJECT_DIR/Resources/Hue.entitlements" \
+        --sign "$SIGNING_IDENTITY" "$APP_DIR"
+fi
 codesign --verify --deep --strict "$APP_DIR"
 echo "Built universal app (arm64 + x86_64, macOS 13+): $APP_DIR"
