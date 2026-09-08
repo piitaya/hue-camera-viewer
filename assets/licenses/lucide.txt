@@ -1,6 +1,6 @@
 Lucide toolbar icons, version 1.43.0
 Source: https://github.com/lucide-icons/lucide/tree/ba95e4c988b1e1b39cf5544e73b25a74b76816ee
-Files: icons/copy.svg, icons/camera.svg, icons/zoom-in.svg, icons/rotate-cw.svg, icons/rotate-ccw.svg, icons/grip-vertical.svg, icons/chevron-up.svg, icons/chevron-down.svg, icons/chevron-left.svg, icons/chevron-right.svg
+Files: icons/copy.svg, icons/camera.svg, icons/zoom-in.svg, icons/snowflake.svg, icons/rotate-cw.svg, icons/rotate-ccw.svg, icons/grip-vertical.svg, icons/chevron-up.svg, icons/chevron-down.svg, icons/chevron-left.svg, icons/chevron-right.svg
 The SVG files are included unchanged. The upstream license follows.
 
 ISC License

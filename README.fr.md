@@ -7,7 +7,7 @@
 [English](README.md) | **Français**
 
 Une application simple pour les caméras de documents HUE et USB : affichage en direct,
-rotation et zoom, et captures PNG enregistrées sur le Bureau, avec une barre d’outils
+rotation, zoom et gel de l’image, et captures PNG enregistrées sur le Bureau, avec une barre d’outils
 déplaçable et repliable.
 
 **Français et anglais · Applications natives pour macOS et Windows**

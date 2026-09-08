@@ -59,4 +59,8 @@
 "Zoom also follows the scroll wheel or a pinch on the trackpad." = "Zoom also follows the scroll wheel or a pinch on the trackpad.";
 "Done" = "Done";
 "Hide or Show Controls" = "Hide or Show Controls";
+"Freeze Image" = "Freeze Image";
+"Resume Live Image" = "Resume Live Image";
+"Freeze or Resume Image" = "Freeze or Resume Image";
+"Image frozen" = "Image frozen";
 "A simple viewer for your documents.\nCamera • Rotation • Zoom • Capture to Desktop" = "A simple viewer for your documents.\nCamera • Rotation • Zoom • Capture to Desktop";

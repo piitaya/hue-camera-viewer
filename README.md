@@ -6,8 +6,8 @@
 
 **English** | [Français](README.fr.md)
 
-A minimal viewer for HUE and USB document cameras: live preview, rotation and zoom,
-and PNG captures saved to your Desktop, with a movable, collapsible toolbar.
+A minimal viewer for HUE and USB document cameras: live preview, rotation, zoom and
+freeze, and PNG captures saved to your Desktop, with a movable, collapsible toolbar.
 
 **English and French · Native apps for macOS and Windows**
 

@@ -37,6 +37,14 @@ public sealed class CameraService : IAsyncDisposable
     public string? SelectedCameraId { get; private set; }
     public CameraStatus Status { get; private set; } = new(CameraState.NoCamera);
     public bool HasFrame { get { lock (frameSync) return latestFrame is not null; } }
+    public bool IsFrozen { get; private set; }
+
+    // A frozen preview keeps its last frame for display, rotation and capture;
+    // the camera keeps running so resuming is immediate.
+    public void SetFrozen(bool frozen)
+    {
+        lock (frameSync) { IsFrozen = frozen && latestFrame is not null; }
+    }
 
     public async Task InitializeAsync(string? savedId, bool demo = false)
     {
@@ -239,6 +247,11 @@ public sealed class CameraService : IAsyncDisposable
     {
         lock (frameSync)
         {
+            if (IsFrozen)
+            {
+                bitmap.Dispose();
+                return;
+            }
             latestFrame?.Dispose();
             latestFrame = bitmap;
             if (FrameReady is not { } subscriber) return;
@@ -261,6 +274,7 @@ public sealed class CameraService : IAsyncDisposable
             reader = null;
             latestFrame?.Dispose();
             latestFrame = null;
+            IsFrozen = false;
             lastFrameTicks = 0;
         }
         if (previousReader is not null)

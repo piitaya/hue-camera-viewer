@@ -74,9 +74,9 @@ internal sealed class MainWindow : Window
     };
     private readonly Border _snapPreview = new()
     {
-        Background = new SolidColorBrush(ThemeColors.Green) { Opacity = 45.0 / 255 },
-        BorderBrush = new SolidColorBrush(ThemeColors.Green) { Opacity = 220.0 / 255 },
-        BorderThickness = new Thickness(2), CornerRadius = new CornerRadius(30),
+        Background = new SolidColorBrush(ThemeColors.Green) { Opacity = 0.18 },
+        BorderBrush = new SolidColorBrush(ThemeColors.Green) { Opacity = 0.7 },
+        BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(31),
         IsHitTestVisible = false, Visibility = Visibility.Collapsed
     };
     private readonly Grid _dockContent = new();
@@ -87,15 +87,18 @@ internal sealed class MainWindow : Window
     private readonly StackPanel _controls = new() { Spacing = 6 };
     private readonly TranslateTransform _dockPosition = new();
     private readonly List<Shape> _themeShapes = new();
+    private readonly HashSet<Shape> _activeGlyphs = new();
+    private Brush _glyphForeground = new SolidColorBrush(Colors.Black);
     private readonly Button _grip;
     private readonly Button _cameraButton;
     private readonly Button _rotateLeft;
     private readonly Button _rotateRight;
     private readonly Button _zoomButton;
     private readonly Button _capture;
+    private readonly Button _freeze;
     private readonly Button _collapse;
     private readonly Button _expand;
-    private readonly Rectangle _divider = new() { Width = 1, Height = 22, Margin = new Thickness(2, 0, 2, 0), Opacity = 0.16 };
+    private readonly Rectangle _divider = new() { Width = 1, Height = 22, Margin = new Thickness(2, 0, 2, 0), Opacity = 0.32 };
     private readonly Flyout _zoomFlyout;
     private readonly Slider _zoomSlider = new() { Minimum = 100, Maximum = 400, StepFrequency = 5 };
     private readonly TextBlock _zoomValue = new() { FontSize = 12, Opacity = 0.7 };
@@ -106,6 +109,12 @@ internal sealed class MainWindow : Window
         Visibility = Visibility.Collapsed
     };
     private readonly TextBlock _zoomPillText = new() { FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
+    private readonly Button _freezePill = new()
+    {
+        HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
+        Margin = new Thickness(14), Padding = new Thickness(12, 6, 6, 6), CornerRadius = new CornerRadius(16),
+        Visibility = Visibility.Collapsed
+    };
     private double _zoom = 1;
     private double _panX;
     private double _panY;
@@ -209,6 +218,23 @@ internal sealed class MainWindow : Window
         AutomationProperties.SetName(_zoomPill, Strings.Get("Zoom to 100 %"));
         _root.Children.Add(_zoomPill);
 
+        StackPanel freezePillContent = new() { Orientation = Orientation.Horizontal, Spacing = 6 };
+        freezePillContent.Children.Add(MakeGlyph(DockIcons.Snowflake, 13));
+        freezePillContent.Children.Add(new TextBlock
+        {
+            Text = Strings.Get("Image frozen"), FontSize = 12, VerticalAlignment = VerticalAlignment.Center
+        });
+        freezePillContent.Children.Add(new TextBlock
+        {
+            Text = "×", FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Width = 18, Height = 18,
+            TextAlignment = TextAlignment.Center, VerticalAlignment = VerticalAlignment.Center
+        });
+        _freezePill.Content = freezePillContent;
+        _freezePill.Click += (_, _) => ToggleFreeze();
+        ToolTipService.SetToolTip(_freezePill, Strings.Get("Resume live image"));
+        AutomationProperties.SetName(_freezePill, Strings.Get("Resume live image"));
+        _root.Children.Add(_freezePill);
+
         _grip = MakeButton("Move controls", MakeGlyph(DockIcons.Grip, rotation: _gripRotation), new DockHandleButton());
         _grip.Click += (_, _) => ShowDockMenu();
         _grip.AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler(GripPressed), true);
@@ -228,6 +254,8 @@ internal sealed class MainWindow : Window
         _zoomButton.Click += (_, _) => ShowZoomPanel();
         _capture = MakeButton("Capture image", MakeGlyph(DockIcons.Capture));
         _capture.Click += async (_, _) => await CaptureAsync();
+        _freeze = MakeButton("Freeze image", MakeGlyph(DockIcons.Snowflake));
+        _freeze.Click += (_, _) => ToggleFreeze();
         _collapse = MakeButton("Hide controls", MakeGlyph(DockIcons.ChevronRight, 15, _chevronRotation));
         _collapse.Click += (_, _) => ToggleDock();
         _expand = MakeButton("Show controls", MakeGlyph(DockIcons.ChevronRight, 15, _expandChevronRotation));
@@ -242,6 +270,7 @@ internal sealed class MainWindow : Window
         _controls.Children.Add(_zoomButton);
         _controls.Children.Add(_divider);
         _controls.Children.Add(_capture);
+        _controls.Children.Add(_freeze);
         RegisterShortcuts();
         _dockStack.Children.Add(_grip);
         _dockStack.Children.Add(_controls);
@@ -423,8 +452,8 @@ internal sealed class MainWindow : Window
         AutomationProperties.SetName(_zoomSlider, Strings.Get("Zoom"));
         panel.Children.Add(_zoomSlider);
         Flyout flyout = new() { Content = panel };
-        flyout.Opened += (_, _) => _zoomButton.Background = new SolidColorBrush(Colors.Gray) { Opacity = 0.25 };
-        flyout.Closed += (_, _) => _zoomButton.Background = new SolidColorBrush(Colors.Transparent);
+        flyout.Opened += (_, _) => SetActive(_zoomButton, true);
+        flyout.Closed += (_, _) => SetActive(_zoomButton, false);
         return flyout;
     }
 
@@ -459,6 +488,7 @@ internal sealed class MainWindow : Window
         AddShortcut(VirtualKey.Left, VirtualKeyModifiers.Control, () => { if (_streaming) Rotate(-1); });
         AddShortcut(VirtualKey.Right, VirtualKeyModifiers.Control, () => { if (_streaming) Rotate(1); });
         AddShortcut(VirtualKey.T, VirtualKeyModifiers.Control, ToggleDock);
+        AddShortcut(VirtualKey.F, VirtualKeyModifiers.Control, ToggleFreeze);
         foreach (VirtualKey key in new[] { VirtualKey.Add, (VirtualKey)0xBB })
             AddShortcut(key, VirtualKeyModifiers.Control, () => SetZoom(Zoom.In(_zoom)));
         foreach (VirtualKey key in new[] { VirtualKey.Subtract, (VirtualKey)0xBD })
@@ -485,6 +515,7 @@ internal sealed class MainWindow : Window
             ("Capture image", "Ctrl S"),
             ("Rotate left / right", "Ctrl ← / Ctrl →"),
             ("Zoom in / out / 100 %", "Ctrl + / Ctrl − / Ctrl 0"),
+            ("Freeze or resume image", "Ctrl F"),
             ("Hide or show controls", "Ctrl T")
         };
         StackPanel list = new() { Spacing = 10, MinWidth = 320 };
@@ -568,13 +599,37 @@ internal sealed class MainWindow : Window
     private void RefreshFrameVisibility()
     {
         bool ready = _streaming && _hasPresentedFrame && _camera.HasFrame;
+        bool frozen = ready && _camera.IsFrozen;
         _statusPanel.Visibility = ready ? Visibility.Collapsed : Visibility.Visible;
         _preview.Opacity = ready ? 1 : 0;
         _capture.IsEnabled = ready && !_capturing;
         _rotateLeft.IsEnabled = ready;
         _rotateRight.IsEnabled = ready;
         _zoomButton.IsEnabled = ready;
+        _freeze.IsEnabled = ready;
+        SetActive(_freeze, frozen);
+        string freezeLabel = Strings.Get(frozen ? "Resume live image" : "Freeze image");
+        ToolTipService.SetToolTip(_freeze, freezeLabel);
+        AutomationProperties.SetName(_freeze, freezeLabel);
         _zoomPill.Visibility = Zoom.IsZoomed(_zoom) && ready ? Visibility.Visible : Visibility.Collapsed;
+        _freezePill.Visibility = frozen ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    // A selected dock button fills with the green accent and draws its glyph in white.
+    private void SetActive(Button button, bool active)
+    {
+        button.Background = new SolidColorBrush(active ? ThemeColors.Green : Colors.Transparent);
+        if (button.Content is not Viewbox { Child: Canvas canvas } || canvas.Children.FirstOrDefault() is not Shape shape) return;
+        if (active) _activeGlyphs.Add(shape); else _activeGlyphs.Remove(shape);
+        shape.Stroke = active ? new SolidColorBrush(Colors.White) : _glyphForeground;
+    }
+
+    private void ToggleFreeze()
+    {
+        bool ready = _streaming && _hasPresentedFrame && _camera.HasFrame;
+        if (!ready) return;
+        _camera.SetFrozen(!_camera.IsFrozen);
+        RefreshFrameVisibility();
     }
 
     private void UpdateCameraLabel()
@@ -633,7 +688,7 @@ internal sealed class MainWindow : Window
     private static (double Width, double Height) DockSize(DockEdge edge, bool collapsed)
     {
         bool horizontal = edge is DockEdge.Top or DockEdge.Bottom;
-        return collapsed ? (horizontal ? (46, 26) : (26, 46)) : (horizontal ? (373, 62) : (62, 373));
+        return collapsed ? (horizontal ? (46, 26) : (26, 46)) : (horizontal ? (423, 62) : (62, 423));
     }
 
     private DockPresentation AnchoredDock(DockEdge edge, bool collapsed)
@@ -673,7 +728,7 @@ internal sealed class MainWindow : Window
     {
         bool expanded = !_settings.IsDockCollapsed;
         _dockStack.IsHitTestVisible = expanded;
-        foreach (Button button in new[] { _grip, _cameraButton, _rotateLeft, _rotateRight, _zoomButton, _capture, _collapse })
+        foreach (Button button in new[] { _grip, _cameraButton, _rotateLeft, _rotateRight, _zoomButton, _capture, _freeze, _collapse })
         {
             button.IsTabStop = expanded;
             AutomationProperties.SetAccessibilityView(button, expanded ? AccessibilityView.Control : AccessibilityView.Raw);
@@ -700,8 +755,8 @@ internal sealed class MainWindow : Window
         _divider.Width = horizontal ? 1 : 22;
         _divider.Height = horizontal ? 22 : 1;
         _divider.Margin = horizontal ? new Thickness(2, 0, 2, 0) : new Thickness(0, 2, 0, 2);
-        _dockStack.Width = horizontal ? 355 : 44;
-        _dockStack.Height = horizontal ? 44 : 355;
+        _dockStack.Width = horizontal ? 405 : 44;
+        _dockStack.Height = horizontal ? 44 : 405;
         _dockStack.Opacity = presentation.ExpandedOpacity;
         _expand.Width = horizontal ? 44 : 24;
         _expand.Height = horizontal ? 24 : 44;
@@ -858,13 +913,17 @@ internal sealed class MainWindow : Window
         _dock.Background = new AcrylicBrush { TintColor = tint, TintOpacity = 0.88, FallbackColor = tint };
         _dock.BorderBrush = new SolidColorBrush(dark ? ColorHelper.FromArgb(255, 85, 90, 91) : ColorHelper.FromArgb(255, 203, 208, 207));
         Brush foreground = new SolidColorBrush(dark ? ColorHelper.FromArgb(255, 241, 244, 243) : ColorHelper.FromArgb(255, 35, 45, 43));
-        foreach (Shape shape in _themeShapes) shape.Stroke = foreground;
+        _glyphForeground = foreground;
+        foreach (Shape shape in _themeShapes) shape.Stroke = _activeGlyphs.Contains(shape) ? new SolidColorBrush(Colors.White) : foreground;
         _divider.Fill = foreground;
         Brush pillSurface = new SolidColorBrush(dark ? ColorHelper.FromArgb(235, 35, 38, 40) : ColorHelper.FromArgb(235, 246, 247, 245));
         Brush pillBorder = new SolidColorBrush(dark ? ColorHelper.FromArgb(255, 85, 90, 91) : ColorHelper.FromArgb(255, 203, 208, 207));
         _zoomPill.Background = pillSurface;
         _zoomPill.BorderBrush = pillBorder;
         _zoomPill.Foreground = foreground;
+        _freezePill.Background = pillSurface;
+        _freezePill.BorderBrush = pillBorder;
+        _freezePill.Foreground = foreground;
     }
 
     private Viewbox MakeGlyph(string data, double size = 21, RotateTransform? rotation = null)
@@ -989,6 +1048,15 @@ internal sealed class MainWindow : Window
         if (_zoom != Zoom.Maximum) throw new InvalidOperationException("The zoom escaped its range.");
         SetZoom(1);
         if (_zoomPill.Visibility != Visibility.Collapsed || _panX != 0) throw new InvalidOperationException("The zoom did not reset.");
+
+        ToggleFreeze();
+        if (!_camera.IsFrozen || _freezePill.Visibility != Visibility.Visible)
+            throw new InvalidOperationException("The freeze did not apply to the preview and its pill.");
+        Rotate(1);
+        if (_rotation.Angle != 180 || !_camera.IsFrozen) throw new InvalidOperationException("Rotation must keep working while frozen.");
+        ToggleFreeze();
+        if (_camera.IsFrozen || _freezePill.Visibility != Visibility.Collapsed)
+            throw new InvalidOperationException("The freeze did not resume the live image.");
     }
 
     private async Task CheckDockMotionAsync()
@@ -1085,8 +1153,8 @@ internal sealed class MainWindow : Window
     {
         DockPresentation expected = AnchoredDock(_settings.DockEdge, _settings.IsDockCollapsed);
         bool horizontal = _settings.DockEdge is DockEdge.Top or DockEdge.Bottom;
-        double expectedWidth = _settings.IsDockCollapsed ? (horizontal ? 46 : 26) : (horizontal ? 373 : 62);
-        double expectedHeight = _settings.IsDockCollapsed ? (horizontal ? 26 : 46) : (horizontal ? 62 : 373);
+        double expectedWidth = _settings.IsDockCollapsed ? (horizontal ? 46 : 26) : (horizontal ? 423 : 62);
+        double expectedHeight = _settings.IsDockCollapsed ? (horizontal ? 26 : 46) : (horizontal ? 62 : 423);
         _root.UpdateLayout();
         if (Math.Abs(_dock.ActualWidth - expectedWidth) > 0.1 || Math.Abs(_dock.ActualHeight - expectedHeight) > 0.1
             || Math.Abs(_dockPosition.X - expected.X) > 0.1 || Math.Abs(_dockPosition.Y - expected.Y) > 0.1

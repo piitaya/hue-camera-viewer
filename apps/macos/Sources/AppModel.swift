@@ -42,10 +42,11 @@ final class AppModel: ObservableObject {
             orientation = ImageOrientation()
         }
         camera.setOrientation(orientation)
-        cameraChanges = Publishers.CombineLatest3(
+        cameraChanges = Publishers.CombineLatest4(
             camera.$state.removeDuplicates(),
             camera.frames.$image.map { $0 != nil }.removeDuplicates(),
-            camera.$isTransforming.removeDuplicates()
+            camera.$isTransforming.removeDuplicates(),
+            camera.$isFrozen.removeDuplicates()
         ).sink { [weak self] values in
             guard let self else { return }
             self.objectWillChange.send()
@@ -70,6 +71,10 @@ final class AppModel: ObservableObject {
     }
 
     var isZoomed: Bool { zoom > 1.001 }
+
+    var isFrozen: Bool { camera.isFrozen }
+
+    var canFreeze: Bool { camera.state == .running && camera.image != nil }
 
     var zoomPercent: Int { Int((zoom * 100).rounded()) }
 
@@ -112,6 +117,8 @@ final class AppModel: ObservableObject {
     func zoomOut() { zoom(by: 1 / Self.zoomStep) }
 
     func resetZoom() { setZoom(1) }
+
+    func toggleFreeze() { camera.setFrozen(!camera.isFrozen) }
 
     // MARK: Capture
 

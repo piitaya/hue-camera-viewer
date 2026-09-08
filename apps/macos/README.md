@@ -28,15 +28,18 @@ Use `open -na build/Hue.app --args --demo` to develop without a camera.
 
 ## Controls
 
-The dock groups the camera, rotation and zoom on one side of a divider and the
-capture button on the other. The magnifier opens the zoom slider; the zoom also
-follows the scroll wheel or a trackpad pinch and only magnifies the preview.
+The dock groups the camera, rotation and zoom on one side of a divider, and the
+capture and snowflake buttons on the other. The magnifier opens the zoom slider; the zoom
+also follows the scroll wheel or a trackpad pinch and only magnifies the preview.
+Freezing holds the current image while the camera keeps running: rotation, zoom and
+capture still apply to the held image, and the pill in the top-left corner resumes the live view.
 
 | Action | Shortcut |
 | --- | --- |
 | Capture to Desktop | ⌘S |
 | Rotate left / right | ⌘← / ⌘→ |
 | Zoom in / out / 100 % | ⌘+ / ⌘− / ⌘0 |
+| Freeze or resume the image | ⌘F |
 | Hide or show controls | ⌥⌘T |
 
 After editing `assets/hue.svg` or the Icon Composer settings, regenerate the shared
