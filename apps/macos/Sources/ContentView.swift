@@ -12,6 +12,7 @@ struct ContentView: View {
     @State private var dragCenter: CGPoint?
     @State private var previewEdge: DockEdge?
     @State private var gripHovered = false
+    @State private var cameraHovered = false
     @State private var captureHovered = false
     @State private var panOffset: CGSize = .zero
     @State private var panStart: CGSize?
@@ -160,6 +161,7 @@ struct ContentView: View {
     private var frozenPill: some View {
         Button(action: model.toggleFreeze) {
             HStack(spacing: 6) {
+                DockGlyph(icon: .snowflake, size: 13)
                 Text("Image frozen")
                     .font(.system(size: 12, weight: .medium))
                 Image(systemName: "xmark")
@@ -168,7 +170,7 @@ struct ContentView: View {
                     .background(.primary.opacity(0.09), in: Circle())
             }
             .foregroundStyle(.primary)
-            .padding(.leading, 12)
+            .padding(.leading, 10)
             .padding(.trailing, 6)
             .padding(.vertical, 6)
             .background(.ultraThinMaterial, in: Capsule())
@@ -287,7 +289,7 @@ struct ContentView: View {
 
     private func dockDivider(for edge: DockEdge) -> some View {
         Rectangle()
-            .fill(.primary.opacity(0.16))
+            .fill(.primary.opacity(0.32))
             .frame(width: edge.isVertical ? 22 : 1, height: edge.isVertical ? 1 : 22)
             .padding(edge.isVertical ? .vertical : .horizontal, 5)
             .accessibilityHidden(true)
@@ -390,6 +392,7 @@ struct ContentView: View {
         .fixedSize()
         .frame(width: 42, height: 42)
         .tint(.primary)
+        .background(.primary.opacity(cameraHovered ? 0.08 : 0), in: Circle())
         // Draw the glyph outside the native menu label, which otherwise
         // scales template images down to a small NSMenu control icon.
         .overlay {
@@ -398,6 +401,7 @@ struct ContentView: View {
             .allowsHitTesting(false)
             .accessibilityHidden(true)
         }
+        .onHover { cameraHovered = $0 }
         .help(String(format: NSLocalizedString("Choose Camera\n%@", comment: "Camera picker tooltip, including the selected camera name"), selectedCameraName))
         .accessibilityLabel("Choose Camera")
         .accessibilityValue(selectedCameraName)
@@ -754,9 +758,9 @@ private struct DockButton: View {
     var body: some View {
         Button(action: action) {
             DockGlyph(icon: icon, size: iconSize)
-                .foregroundStyle(isEnabled ? Color.primary : Color.secondary)
+                .foregroundStyle(isActive ? Color.white : isEnabled ? Color.primary : Color.secondary)
                 .frame(width: size, height: size)
-                .background(.primary.opacity(isActive ? 0.14 : hovering && isEnabled ? 0.08 : 0), in: Circle())
+                .background(isActive ? AnyShapeStyle(dockAccent) : AnyShapeStyle(.primary.opacity(hovering && isEnabled ? 0.08 : 0)), in: Circle())
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)

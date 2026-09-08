@@ -87,6 +87,8 @@ internal sealed class MainWindow : Window
     private readonly StackPanel _controls = new() { Spacing = 6 };
     private readonly TranslateTransform _dockPosition = new();
     private readonly List<Shape> _themeShapes = new();
+    private readonly HashSet<Shape> _activeGlyphs = new();
+    private Brush _glyphForeground = new SolidColorBrush(Colors.Black);
     private readonly Button _grip;
     private readonly Button _cameraButton;
     private readonly Button _rotateLeft;
@@ -96,7 +98,7 @@ internal sealed class MainWindow : Window
     private readonly Button _freeze;
     private readonly Button _collapse;
     private readonly Button _expand;
-    private readonly Rectangle _divider = new() { Width = 1, Height = 22, Margin = new Thickness(2, 0, 2, 0), Opacity = 0.16 };
+    private readonly Rectangle _divider = new() { Width = 1, Height = 22, Margin = new Thickness(2, 0, 2, 0), Opacity = 0.32 };
     private readonly Flyout _zoomFlyout;
     private readonly Slider _zoomSlider = new() { Minimum = 100, Maximum = 400, StepFrequency = 5 };
     private readonly TextBlock _zoomValue = new() { FontSize = 12, Opacity = 0.7 };
@@ -217,6 +219,7 @@ internal sealed class MainWindow : Window
         _root.Children.Add(_zoomPill);
 
         StackPanel freezePillContent = new() { Orientation = Orientation.Horizontal, Spacing = 6 };
+        freezePillContent.Children.Add(MakeGlyph(DockIcons.Snowflake, 13));
         freezePillContent.Children.Add(new TextBlock
         {
             Text = Strings.Get("Image frozen"), FontSize = 12, VerticalAlignment = VerticalAlignment.Center
@@ -449,8 +452,8 @@ internal sealed class MainWindow : Window
         AutomationProperties.SetName(_zoomSlider, Strings.Get("Zoom"));
         panel.Children.Add(_zoomSlider);
         Flyout flyout = new() { Content = panel };
-        flyout.Opened += (_, _) => _zoomButton.Background = new SolidColorBrush(Colors.Gray) { Opacity = 0.25 };
-        flyout.Closed += (_, _) => _zoomButton.Background = new SolidColorBrush(Colors.Transparent);
+        flyout.Opened += (_, _) => SetActive(_zoomButton, true);
+        flyout.Closed += (_, _) => SetActive(_zoomButton, false);
         return flyout;
     }
 
@@ -604,12 +607,21 @@ internal sealed class MainWindow : Window
         _rotateRight.IsEnabled = ready;
         _zoomButton.IsEnabled = ready;
         _freeze.IsEnabled = ready;
-        _freeze.Background = frozen ? new SolidColorBrush(Colors.Gray) { Opacity = 0.25 } : new SolidColorBrush(Colors.Transparent);
+        SetActive(_freeze, frozen);
         string freezeLabel = Strings.Get(frozen ? "Resume live image" : "Freeze image");
         ToolTipService.SetToolTip(_freeze, freezeLabel);
         AutomationProperties.SetName(_freeze, freezeLabel);
         _zoomPill.Visibility = Zoom.IsZoomed(_zoom) && ready ? Visibility.Visible : Visibility.Collapsed;
         _freezePill.Visibility = frozen ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    // A selected dock button fills with the green accent and draws its glyph in white.
+    private void SetActive(Button button, bool active)
+    {
+        button.Background = new SolidColorBrush(active ? ThemeColors.Green : Colors.Transparent);
+        if (button.Content is not Viewbox { Child: Canvas canvas } || canvas.Children.FirstOrDefault() is not Shape shape) return;
+        if (active) _activeGlyphs.Add(shape); else _activeGlyphs.Remove(shape);
+        shape.Stroke = active ? new SolidColorBrush(Colors.White) : _glyphForeground;
     }
 
     private void ToggleFreeze()
@@ -905,7 +917,8 @@ internal sealed class MainWindow : Window
         _dock.Background = new AcrylicBrush { TintColor = tint, TintOpacity = 0.88, FallbackColor = tint };
         _dock.BorderBrush = new SolidColorBrush(dark ? ColorHelper.FromArgb(255, 85, 90, 91) : ColorHelper.FromArgb(255, 203, 208, 207));
         Brush foreground = new SolidColorBrush(dark ? ColorHelper.FromArgb(255, 241, 244, 243) : ColorHelper.FromArgb(255, 35, 45, 43));
-        foreach (Shape shape in _themeShapes) shape.Stroke = foreground;
+        _glyphForeground = foreground;
+        foreach (Shape shape in _themeShapes) shape.Stroke = _activeGlyphs.Contains(shape) ? new SolidColorBrush(Colors.White) : foreground;
         _divider.Fill = foreground;
         Brush pillSurface = new SolidColorBrush(dark ? ColorHelper.FromArgb(235, 35, 38, 40) : ColorHelper.FromArgb(235, 246, 247, 245));
         Brush pillBorder = new SolidColorBrush(dark ? ColorHelper.FromArgb(255, 85, 90, 91) : ColorHelper.FromArgb(255, 203, 208, 207));
