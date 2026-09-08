@@ -42,6 +42,10 @@ internal static class Strings
         ["Rotate left / right"] = "Tourner à gauche / à droite",
         ["Zoom in / out / 100 %"] = "Zoom avant / arrière / 100 %",
         ["Hide or show controls"] = "Masquer ou afficher les commandes",
+        ["Freeze image"] = "Figer l’image",
+        ["Resume live image"] = "Reprendre le direct",
+        ["Freeze or resume image"] = "Figer ou reprendre l’image",
+        ["Image frozen"] = "Image figée",
         ["Zoom also follows the mouse wheel or a pinch on the touchpad."] = "Le zoom suit aussi la molette de la souris ou le pincement sur le pavé tactile.",
         ["Close"] = "Fermer"
     };
