@@ -59,8 +59,7 @@ struct ContentView: View {
                             .foregroundStyle(.primary)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 11)
-                            .background(.ultraThinMaterial, in: Capsule())
-                            .overlay(Capsule().strokeBorder(.primary.opacity(0.10)))
+                            .modifier(DockSurface(forceClassic: forceClassicDock))
                     }
                     .buttonStyle(.plain)
                     .help("Show Capture in Finder")
@@ -166,8 +165,7 @@ struct ContentView: View {
             .padding(.leading, 10)
             .padding(.trailing, 6)
             .padding(.vertical, 6)
-            .background(.ultraThinMaterial, in: Capsule())
-            .overlay(Capsule().strokeBorder(.primary.opacity(0.10)))
+            .modifier(DockSurface(forceClassic: forceClassicDock))
         }
         .buttonStyle(.plain)
         .help("Resume Live Image")
@@ -188,8 +186,7 @@ struct ContentView: View {
             .padding(.leading, 12)
             .padding(.trailing, 6)
             .padding(.vertical, 6)
-            .background(.ultraThinMaterial, in: Capsule())
-            .overlay(Capsule().strokeBorder(.primary.opacity(0.10)))
+            .modifier(DockSurface(forceClassic: forceClassicDock))
         }
         .buttonStyle(.plain)
         .help("Zoom to 100 %")
