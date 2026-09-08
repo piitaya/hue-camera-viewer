@@ -24,7 +24,8 @@ open build/Hue.app
 ```
 
 Run tests with `bash Scripts/test.sh`.
-Use `open -na build/Hue.app --args --demo` to develop without a camera.
+Use `open -na build/Hue.app --args --demo` to develop without a camera, and add
+`--demo-image picture.png` to preview a picture of your own without the demo label.
 
 ## Controls
 

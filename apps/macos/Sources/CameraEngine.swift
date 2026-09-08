@@ -431,7 +431,17 @@ final class CameraEngine: NSObject, ObservableObject {
         }
     }
 
+    /// `--demo-image <file>` previews a picture of your own instead of the drawn one.
+    static var demoImageFile: URL? {
+        let args = ProcessInfo.processInfo.arguments
+        guard let index = args.firstIndex(of: "--demo-image"), index + 1 < args.count else { return nil }
+        return URL(fileURLWithPath: args[index + 1])
+    }
+
     private static func demoImage() -> CIImage {
+        if let file = demoImageFile, let image = CIImage(contentsOf: file) {
+            return image
+        }
         let background = CIImage(color: CIColor(red: 0.94, green: 0.93, blue: 0.90))
             .cropped(to: CGRect(x: 0, y: 0, width: 800, height: 600))
         let square = CIImage(color: CIColor(red: 0.25, green: 0.65, blue: 0.50))

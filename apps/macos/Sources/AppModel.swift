@@ -72,6 +72,8 @@ final class AppModel: ObservableObject {
 
     var isZoomed: Bool { zoom > 1.001 }
 
+    var showsDemoBadge: Bool { isDemo && CameraEngine.demoImageFile == nil }
+
     var isFrozen: Bool { camera.isFrozen }
 
     var canFreeze: Bool { camera.state == .running && camera.image != nil }
