@@ -5,7 +5,7 @@
   --paper: #f6f8ee;
   --card: #ffffff;
   --line: #d9dfd9;
-  --accent: #4aa974;
+  --accent: #2b7d55;
   --accent-ink: #ffffff;
 }
 @media (prefers-color-scheme: dark) {
@@ -42,7 +42,7 @@ h1 { font-size: 34px; margin: 12px 0 6px; letter-spacing: -0.01em; }
   padding: 14px 26px; border-radius: 14px; text-decoration: none;
   background: var(--accent); color: var(--accent-ink); font-weight: 600; min-width: 220px;
 }
-.button small { font-weight: 400; font-size: 13px; opacity: 0.85; }
+.button small { font-weight: 400; font-size: 13px; }
 .all { text-align: center; font-size: 14px; }
 .all a, footer a { color: inherit; }
 .screenshot { display: block; width: 100%; height: auto; margin: 34px 0 8px; }
