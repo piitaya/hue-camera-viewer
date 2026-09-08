@@ -4,7 +4,7 @@
 
 [![Latest version](https://img.shields.io/github/v/release/piitaya/hue-camera-viewer?display_name=tag&label=version)](https://github.com/piitaya/hue-camera-viewer/releases/latest)
 
-**[Download for macOS](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-macOS.dmg)** · **[Download for Windows](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-Windows.exe)** · [All releases](https://github.com/piitaya/hue-camera-viewer/releases)
+**[Download for macOS](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-macOS.dmg)** · **[Download for Windows](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-Windows.exe)** · [All releases](https://github.com/piitaya/hue-camera-viewer/releases) · [Website](https://piitaya.github.io/hue-camera-viewer/)
 
 **English** | [Français](README.fr.md)
 
@@ -78,6 +78,7 @@ Hue Camera Viewer is an independent project, not affiliated with HUE or the othe
 - `apps/windows`: C# app, tests, and Windows packaging, see the [Windows guide](apps/windows/README.md).
 - `assets`: shared app icons.
 - `scripts`: version bump and CI helpers.
+- `docs`: the website, served by GitHub Pages from `main`.
 
 Pull requests and pushes to `main` build and test the affected apps, skipping documentation-only
 changes. Manual runs build both apps. Preview builds of every change stay available for three

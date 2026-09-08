@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://piitaya.github.io/hue-camera-viewer/sitemap.xml

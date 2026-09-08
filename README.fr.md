@@ -4,7 +4,7 @@
 
 [![Dernière version](https://img.shields.io/github/v/release/piitaya/hue-camera-viewer?display_name=tag&label=version)](https://github.com/piitaya/hue-camera-viewer/releases/latest)
 
-**[Télécharger pour macOS](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-macOS.dmg)** · **[Télécharger pour Windows](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-Windows.exe)** · [Toutes les versions](https://github.com/piitaya/hue-camera-viewer/releases)
+**[Télécharger pour macOS](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-macOS.dmg)** · **[Télécharger pour Windows](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-Windows.exe)** · [Toutes les versions](https://github.com/piitaya/hue-camera-viewer/releases) · [Site web](https://piitaya.github.io/hue-camera-viewer/fr/)
 
 [English](README.md) | **Français**
 
