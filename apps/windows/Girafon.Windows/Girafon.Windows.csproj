@@ -26,6 +26,7 @@
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
     <ProjectReference Include="../Girafon.Core/Girafon.Core.csproj" />
     <Content Include="../../../LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../../assets/licenses/lucide.txt" Link="Lucide-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../../assets/Girafon.ico" Link="Assets/Girafon.ico" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../../assets/girafon.png" Link="Assets/girafon.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

@@ -130,11 +130,11 @@ struct ContentView: View {
             dragHandle(for: edge, in: size)
             cameraMenu
             dockDivider(for: edge)
-            DockButton("Rotate Right", symbol: "rotate.right") { model.rotate(1) }
-            DockButton("Rotate Left", symbol: "rotate.left") { model.rotate(-1) }
+            DockButton("Rotate Right", icon: .rotateRight) { model.rotate(1) }
+            DockButton("Rotate Left", icon: .rotateLeft) { model.rotate(-1) }
             dockDivider(for: edge)
             captureButton
-            DockButton("Hide Controls", symbol: chevron(for: edge, inward: false), size: 30, iconSize: 12) {
+            DockButton("Hide Controls", icon: chevron(for: edge, inward: false), size: 30, iconSize: 15) {
                 model.toggleToolbar()
             }
         }
@@ -152,13 +152,9 @@ struct ContentView: View {
     }
 
     private func dragHandle(for edge: DockEdge, in size: CGSize) -> some View {
-        VStack(spacing: 2) {
-            Image(systemName: "ellipsis").frame(height: 5)
-            Image(systemName: "ellipsis").frame(height: 5)
-        }
-            .font(.system(size: 17, weight: .bold))
+        DockGlyph(icon: .grip)
             .foregroundStyle(.primary)
-            .rotationEffect(.degrees(edge.isVertical ? 0 : 90))
+            .rotationEffect(.degrees(edge.isVertical ? 90 : 0))
             .frame(width: edge.isVertical ? 42 : 26, height: edge.isVertical ? 26 : 42)
             .background(.primary.opacity(gripHovered ? 0.10 : 0), in: RoundedRectangle(cornerRadius: 7))
             .contentShape(Rectangle())
@@ -209,12 +205,12 @@ struct ContentView: View {
         }
     }
 
-    private func chevron(for edge: DockEdge, inward: Bool) -> String {
+    private func chevron(for edge: DockEdge, inward: Bool) -> DockIcon {
         switch edge {
-        case .left: return inward ? "chevron.right" : "chevron.left"
-        case .right: return inward ? "chevron.left" : "chevron.right"
-        case .top: return inward ? "chevron.down" : "chevron.up"
-        case .bottom: return inward ? "chevron.up" : "chevron.down"
+        case .left: return inward ? .chevronRight : .chevronLeft
+        case .right: return inward ? .chevronLeft : .chevronRight
+        case .top: return inward ? .chevronDown : .chevronUp
+        case .bottom: return inward ? .chevronUp : .chevronDown
         }
     }
 
@@ -243,10 +239,7 @@ struct ContentView: View {
         // Draw the glyph outside the native menu label, which otherwise
         // scales template images down to a small NSMenu control icon.
         .overlay {
-            Image(systemName: "video")
-            .resizable()
-            .scaledToFit()
-            .frame(width: 22, height: 18)
+            DockGlyph(icon: .source)
             .foregroundStyle(.primary)
             .allowsHitTesting(false)
             .accessibilityHidden(true)
@@ -267,8 +260,7 @@ struct ContentView: View {
                 if model.isSaving {
                     ProgressView().controlSize(.small).tint(.primary)
                 } else {
-                    Image(systemName: "camera")
-                        .font(.system(size: 17, weight: .medium))
+                    DockGlyph(icon: .capture)
                         .foregroundStyle(model.canRequestCapture ? Color.primary : Color.secondary)
                 }
             }
@@ -284,8 +276,7 @@ struct ContentView: View {
 
     private func showDockButton(for edge: DockEdge, size: CGSize) -> some View {
         Button(action: model.toggleToolbar) {
-            Image(systemName: chevron(for: edge, inward: true))
-                .font(.system(size: 12, weight: .semibold))
+            DockGlyph(icon: chevron(for: edge, inward: true), size: 15)
                 .foregroundStyle(.primary)
                 .frame(width: size.width, height: size.height)
                 .contentShape(Capsule())
@@ -381,18 +372,44 @@ private struct CameraImageView: View {
     }
 }
 
+private enum DockIcon: String {
+    case source = "DockSource"
+    case capture = "DockCapture"
+    case rotateRight = "DockRotateRight"
+    case rotateLeft = "DockRotateLeft"
+    case grip = "DockGrip"
+    case chevronUp = "DockChevronUp"
+    case chevronDown = "DockChevronDown"
+    case chevronLeft = "DockChevronLeft"
+    case chevronRight = "DockChevronRight"
+}
+
+private struct DockGlyph: View {
+    let icon: DockIcon
+    var size: CGFloat = 21
+
+    var body: some View {
+        Image(icon.rawValue)
+            .renderingMode(.template)
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .accessibilityHidden(true)
+    }
+}
+
 private struct DockButton: View {
     let title: LocalizedStringKey
-    let symbol: String
+    let icon: DockIcon
     var size: CGFloat = 42
-    var iconSize: CGFloat = 17
+    var iconSize: CGFloat = 21
     let action: () -> Void
     @State private var hovering = false
 
-    init(_ title: LocalizedStringKey, symbol: String,
-         size: CGFloat = 42, iconSize: CGFloat = 17, action: @escaping () -> Void) {
+    init(_ title: LocalizedStringKey, icon: DockIcon,
+         size: CGFloat = 42, iconSize: CGFloat = 21, action: @escaping () -> Void) {
         self.title = title
-        self.symbol = symbol
+        self.icon = icon
         self.size = size
         self.iconSize = iconSize
         self.action = action
@@ -400,8 +417,7 @@ private struct DockButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: iconSize, weight: .medium))
+            DockGlyph(icon: icon, size: iconSize)
                 .foregroundStyle(.primary)
                 .frame(width: size, height: size)
                 .background(.primary.opacity(hovering ? 0.08 : 0), in: Circle())

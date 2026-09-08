@@ -89,6 +89,7 @@ internal sealed class MainWindow : Window
     private readonly Button _capture;
     private readonly Button _collapse;
     private readonly Button _expand;
+    private readonly RotateTransform _gripRotation = new() { CenterX = 12, CenterY = 12 };
     private readonly RotateTransform _chevronRotation = new() { CenterX = 12, CenterY = 12 };
     private readonly RotateTransform _expandChevronRotation = new() { CenterX = 12, CenterY = 12 };
     private readonly UISettings _uiSettings = new();
@@ -148,7 +149,7 @@ internal sealed class MainWindow : Window
         _toast.Child = _toastText;
         _root.Children.Add(_toast);
 
-        _grip = MakeButton("Move controls", MakeGrip(), new DockHandleButton());
+        _grip = MakeButton("Move controls", MakeGlyph(DockIcons.Grip, rotation: _gripRotation), new DockHandleButton());
         _grip.Click += (_, _) => ShowDockMenu();
         _grip.AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler(GripPressed), true);
         _grip.AddHandler(UIElement.PointerMovedEvent, new PointerEventHandler(GripMoved), true);
@@ -156,21 +157,17 @@ internal sealed class MainWindow : Window
         _grip.PointerCanceled += (_, _) => FinishDrag(false);
         _grip.PointerCaptureLost += (_, _) => FinishDrag(false);
 
-        _cameraButton = MakeButton("Choose camera", MakeGlyph("M 4 5 H 14 Q 16 5 16 7 V 17 Q 16 19 14 19 H 4 Q 2 19 2 17 V 7 Q 2 5 4 5 Z M 16 9 L 22 6 V 18 L 16 15"));
+        _cameraButton = MakeButton("Choose camera", MakeGlyph(DockIcons.Source));
         _cameraButton.Click += (_, _) => ShowCameraMenu();
-        _rotateLeft = MakeButton("Rotate left", MakeGlyph("M 4 10 A 8 8 0 1 1 5 18 M 4 4 V 10 H 10"));
+        _rotateLeft = MakeButton("Rotate left", MakeGlyph(DockIcons.RotateLeft));
         _rotateLeft.Click += (_, _) => Rotate(-1);
-        _rotateRight = MakeButton("Rotate right", MakeGlyph("M 20 10 A 8 8 0 1 0 19 18 M 20 4 V 10 H 14"));
+        _rotateRight = MakeButton("Rotate right", MakeGlyph(DockIcons.RotateRight));
         _rotateRight.Click += (_, _) => Rotate(1);
-        _capture = MakeButton("Capture image", MakeGlyph("M 4 6 H 7 L 9 3 H 15 L 17 6 H 20 Q 22 6 22 8 V 19 Q 22 21 20 21 H 4 Q 2 21 2 19 V 8 Q 2 6 4 6 Z M 16 13 A 4 4 0 1 1 8 13 A 4 4 0 1 1 16 13"));
+        _capture = MakeButton("Capture image", MakeGlyph(DockIcons.Capture));
         _capture.Click += async (_, _) => await CaptureAsync();
-        Canvas chevron = MakeGlyph("M 8 5 L 15 12 L 8 19");
-        chevron.RenderTransform = _chevronRotation;
-        _collapse = MakeButton("Hide controls", chevron);
+        _collapse = MakeButton("Hide controls", MakeGlyph(DockIcons.ChevronRight, 15, _chevronRotation));
         _collapse.Click += (_, _) => ToggleDock();
-        Canvas expandChevron = MakeGlyph("M 8 5 L 15 12 L 8 19");
-        expandChevron.RenderTransform = _expandChevronRotation;
-        _expand = MakeButton("Show controls", new Viewbox { Width = 18, Height = 18, Child = expandChevron });
+        _expand = MakeButton("Show controls", MakeGlyph(DockIcons.ChevronRight, 15, _expandChevronRotation));
         _expand.MinWidth = _expand.MinHeight = 0;
         _expand.HorizontalAlignment = HorizontalAlignment.Center;
         _expand.VerticalAlignment = VerticalAlignment.Center;
@@ -468,6 +465,7 @@ internal sealed class MainWindow : Window
         _dockPosition.Y = clamped.Y;
 
         bool horizontal = presentation.Edge is DockEdge.Top or DockEdge.Bottom;
+        _gripRotation.Angle = horizontal ? 0 : 90;
         _dockStack.Orientation = _controls.Orientation = horizontal ? Orientation.Horizontal : Orientation.Vertical;
         _dockStack.Width = horizontal ? 294 : 44;
         _dockStack.Height = horizontal ? 44 : 294;
@@ -627,35 +625,17 @@ internal sealed class MainWindow : Window
         _dock.Background = new AcrylicBrush { TintColor = tint, TintOpacity = 0.88, FallbackColor = tint };
         _dock.BorderBrush = new SolidColorBrush(dark ? ColorHelper.FromArgb(255, 85, 90, 91) : ColorHelper.FromArgb(255, 203, 208, 207));
         Brush foreground = new SolidColorBrush(dark ? ColorHelper.FromArgb(255, 241, 244, 243) : ColorHelper.FromArgb(255, 35, 45, 43));
-        foreach (Shape shape in _themeShapes)
-        {
-            if (shape is Ellipse) shape.Fill = foreground;
-            else shape.Stroke = foreground;
-        }
+        foreach (Shape shape in _themeShapes) shape.Stroke = foreground;
     }
 
-    private Canvas MakeGlyph(string data)
+    private Viewbox MakeGlyph(string data, double size = 21, RotateTransform? rotation = null)
     {
         Canvas canvas = new() { Width = 24, Height = 24 };
-        var path = (Microsoft.UI.Xaml.Shapes.Path)XamlReader.Load($"<Path xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' Data='{data}' StrokeThickness='1.9' StrokeLineJoin='Round' StrokeStartLineCap='Round' StrokeEndLineCap='Round' />");
+        if (rotation is not null) canvas.RenderTransform = rotation;
+        var path = (Microsoft.UI.Xaml.Shapes.Path)XamlReader.Load($"<Path xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' Data='{data}' StrokeThickness='2' StrokeLineJoin='Round' StrokeStartLineCap='Round' StrokeEndLineCap='Round' />");
         _themeShapes.Add(path);
         canvas.Children.Add(path);
-        return canvas;
-    }
-
-    private Canvas MakeGrip()
-    {
-        Canvas canvas = new() { Width = 24, Height = 24 };
-        foreach (double x in new[] { 6.5, 13.5 })
-        foreach (double y in new[] { 3.5, 10.5, 17.5 })
-        {
-            Ellipse dot = new() { Width = 3.5, Height = 3.5 };
-            Canvas.SetLeft(dot, x);
-            Canvas.SetTop(dot, y);
-            canvas.Children.Add(dot);
-            _themeShapes.Add(dot);
-        }
-        return canvas;
+        return new Viewbox { Width = size, Height = size, Child = canvas };
     }
 
     private static Button MakeButton(string label, UIElement glyph, Button? button = null)

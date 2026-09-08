@@ -40,15 +40,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Select Xcode with the macOS 26 SDK
+      - name: Select Xcode 26.3
         shell: bash
         run: |
-          for xcode in /Applications/Xcode_26*.app; do
-            if [[ -d "$xcode" ]]; then
-              sudo xcode-select --switch "$xcode/Contents/Developer"
-              break
-            fi
-          done
+          sudo xcode-select --switch /Applications/Xcode_26.3.app/Contents/Developer
           xcodebuild -version
       - name: Build universal app
         run: bash apps/macos/Scripts/build.sh

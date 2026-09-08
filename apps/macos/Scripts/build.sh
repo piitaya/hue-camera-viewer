@@ -17,19 +17,22 @@ lipo -create "$BUILD_DIR/slices/arm64/Girafon" "$BUILD_DIR/slices/x86_64/Girafon
 lipo "$APP_DIR/Contents/MacOS/Girafon" -verify_arch arm64 x86_64
 cp "$PROJECT_DIR/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
 cp "$REPOSITORY_DIR/LICENSE" "$APP_DIR/Contents/Resources/LICENSE.txt"
+cp "$REPOSITORY_DIR/assets/licenses/lucide.txt" "$APP_DIR/Contents/Resources/Lucide-LICENSE.txt"
 # Convert the shared icon into macOS sizes using a build-time tool for the host.
 xcrun swiftc -O -module-cache-path "$BUILD_DIR/tool-module-cache" \
     "$PROJECT_DIR/Scripts/MakeIcon.swift" -o "$BUILD_DIR/make-icon"
 "$BUILD_DIR/make-icon" "$BUILD_DIR/Girafon.iconset" "$REPOSITORY_DIR/assets/girafon.png"
 iconutil -c icns "$BUILD_DIR/Girafon.iconset" -o "$APP_DIR/Contents/Resources/Girafon.icns"
 
-# Native macOS 26 appearances; the classic ICNS remains available on macOS 13–15.
+# Compile the toolbar vectors and native macOS 26 icon appearances together.
+# The classic ICNS remains available on macOS 13–15.
 ICON_SOURCE="$BUILD_DIR/Girafon.icon"
 ICON_COMPILED="$BUILD_DIR/icon-assets"
 mkdir -p "$ICON_SOURCE/Assets" "$ICON_COMPILED"
 cp "$PROJECT_DIR/Resources/Girafon.icon/icon.json" "$ICON_SOURCE/icon.json"
 cp "$REPOSITORY_DIR/assets/girafon.svg" "$ICON_SOURCE/Assets/girafon.svg"
-xcrun actool "$ICON_SOURCE" --compile "$ICON_COMPILED" --platform macosx \
+xcrun actool "$ICON_SOURCE" "$PROJECT_DIR/Resources/Toolbar.xcassets" \
+    --compile "$ICON_COMPILED" --platform macosx \
     --minimum-deployment-target 13.0 --app-icon Girafon \
     --output-partial-info-plist "$ICON_COMPILED/Info.plist" --output-format human-readable-text
 cp "$ICON_COMPILED/Assets.car" "$APP_DIR/Contents/Resources/Assets.car"
