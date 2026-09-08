@@ -29,7 +29,7 @@ case "${GITHUB_EVENT_NAME:-}" in
     ;;
 esac
 
-changed_files=$(mktemp "${TMPDIR:-/tmp}/hue-changed-platforms.XXXXXX")
+changed_files=$(mktemp "${TMPDIR:-/tmp}/girafon-changed-platforms.XXXXXX")
 trap 'rm -f "$changed_files"' EXIT
 
 # Disable rename detection so both the old and new platforms are considered.

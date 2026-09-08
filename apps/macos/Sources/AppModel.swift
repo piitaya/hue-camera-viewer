@@ -13,7 +13,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var lastCapture: URL?
     @Published private(set) var notice: String?
     @Published var errorMessage: String?
-    private let saveQueue = DispatchQueue(label: "app.hue.save", qos: .userInitiated)
+    private let saveQueue = DispatchQueue(label: "app.girafon.save", qos: .userInitiated)
     private var noticeTask: Task<Void, Never>?
     private var cameraChanges: AnyCancellable?
     private var capturePending = false
@@ -21,15 +21,15 @@ final class AppModel: ObservableObject {
     init() {
         isDemo = ProcessInfo.processInfo.arguments.contains("--demo")
         camera = CameraEngine(demo: isDemo)
-        if !isDemo, let visible = UserDefaults.standard.object(forKey: "hue.toolbarVisible") as? Bool {
+        if !isDemo, let visible = UserDefaults.standard.object(forKey: "girafon.toolbarVisible") as? Bool {
             isToolbarVisible = visible
         }
-        if !isDemo, let storedEdge = UserDefaults.standard.string(forKey: "hue.dockEdge"),
+        if !isDemo, let storedEdge = UserDefaults.standard.string(forKey: "girafon.dockEdge"),
            let edge = DockEdge(rawValue: storedEdge) {
             dockEdge = edge
         }
         if !isDemo,
-           let data = UserDefaults.standard.data(forKey: "hue.orientation"),
+           let data = UserDefaults.standard.data(forKey: "girafon.orientation"),
            let stored = try? JSONDecoder().decode(ImageOrientation.self, from: data) {
             orientation = stored
         } else {
@@ -76,7 +76,7 @@ final class AppModel: ObservableObject {
     private func commitOrientation() {
         camera.setOrientation(orientation)
         if !isDemo, let data = try? JSONEncoder().encode(orientation) {
-            UserDefaults.standard.set(data, forKey: "hue.orientation")
+            UserDefaults.standard.set(data, forKey: "girafon.orientation")
         }
     }
 
@@ -108,7 +108,7 @@ final class AppModel: ObservableObject {
                     self.lastCapture = url
                     self.showNotice(self.isDemo ? NSLocalizedString("Demo capture saved", comment: "Successful demo capture") : NSLocalizedString("Capture saved to the Desktop", comment: "Successful capture"))
                 case .failure(let error):
-                    self.errorMessage = String(format: NSLocalizedString("The capture could not be saved.\n\nCheck Desktop access in System Settings → Privacy & Security → Files & Folders → Hue.\n\n%@", comment: "Capture failure followed by the system error"), error.localizedDescription)
+                    self.errorMessage = String(format: NSLocalizedString("The capture could not be saved.\n\nCheck Desktop access in System Settings → Privacy & Security → Files & Folders → Girafon.\n\n%@", comment: "Capture failure followed by the system error"), error.localizedDescription)
                 }
             }
         }
@@ -121,7 +121,7 @@ final class AppModel: ObservableObject {
             if let index = args.firstIndex(of: "--capture-directory"), index + 1 < args.count {
                 return URL(fileURLWithPath: args[index + 1], isDirectory: true)
             }
-            return FileManager.default.temporaryDirectory.appendingPathComponent("Hue-Demo", isDirectory: true)
+            return FileManager.default.temporaryDirectory.appendingPathComponent("Girafon-Demo", isDirectory: true)
         }
         return FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first
     }
@@ -140,13 +140,13 @@ final class AppModel: ObservableObject {
     func toggleToolbar() {
         isToolbarVisible.toggle()
         if !isDemo {
-            UserDefaults.standard.set(isToolbarVisible, forKey: "hue.toolbarVisible")
+            UserDefaults.standard.set(isToolbarVisible, forKey: "girafon.toolbarVisible")
         }
     }
 
     func setDockEdge(_ edge: DockEdge) {
         dockEdge = edge
-        if !isDemo { UserDefaults.standard.set(edge.rawValue, forKey: "hue.dockEdge") }
+        if !isDemo { UserDefaults.standard.set(edge.rawValue, forKey: "girafon.dockEdge") }
     }
 
     private func showNotice(_ message: String) {

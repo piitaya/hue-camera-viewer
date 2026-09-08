@@ -1,11 +1,11 @@
-# Hue Camera Viewer
+# Girafon
 
-> Independent project, not affiliated with HUE. This app is compatible with HUE cameras.
+<img src="assets/girafon.png" width="96" alt="Girafon app icon">
 
 **English** | [Français](README.fr.md)
 
-A minimal viewer for HUE and USB document cameras: live preview, 90° rotation,
-and PNG capture to the Desktop, with a movable, collapsible dock.
+A minimal document camera viewer: live preview, 90° rotation, and PNG captures
+saved to your Desktop, with a movable, collapsible toolbar.
 
 **English and French · Native apps for macOS and Windows**
 
@@ -16,13 +16,29 @@ and PNG capture to the Desktop, with a movable, collapsible dock.
 
 ## Install
 
-**[Download for macOS](https://github.com/piitaya/hue-camera-viewer/releases/download/v1.0.0-beta.1/Hue-Camera-Viewer-1.0-Universal.dmg)** · **[Download for Windows](https://github.com/piitaya/hue-camera-viewer/releases/download/v1.0.0-beta.1/Hue-Setup.exe)**
-
-On macOS, open the DMG and drag Hue to Applications.
-On Windows, run `Hue-Setup.exe`, then open Hue from the Start menu.
+Download the Girafon preview installers from a successful [GitHub Actions build](https://github.com/piitaya/girafon/actions/workflows/build.yml).
+On macOS, open the DMG and drag Girafon to Applications.
+On Windows, run `Girafon-Setup.exe`, then open Girafon from the Start menu.
 Connect your camera and allow camera access when prompted.
 
-The Windows installer is unsigned and may trigger a Microsoft SmartScreen warning.
+Preview builds are for testing: the macOS preview is not notarized, and the unsigned
+Windows installer may trigger a Microsoft SmartScreen warning.
+[Published releases](https://github.com/piitaya/girafon/releases) remain available separately.
+
+## Cameras
+
+Girafon uses cameras exposed by the operating system.
+
+| Camera family | Connection |
+| --- | --- |
+| [HUE HD Pro](https://huehd.com/pro/) (1080p) | USB UVC |
+| [HUE HD](https://huehd.com/products/hue-hd-camera/) (720p and 1080p UVC models) | USB UVC |
+| Other USB webcams and document cameras | Standard UVC video |
+| Built-in Mac and PC cameras | System camera support |
+
+This covers camera families, not an exhaustive list of tested models. Individual device
+compatibility can vary; older cameras requiring proprietary drivers are not covered.
+Girafon is independent and is not affiliated with the camera manufacturers listed here.
 
 ## Repository
 
@@ -31,8 +47,6 @@ The Windows installer is unsigned and may trigger a Microsoft SmartScreen warnin
 - `assets`: shared app icons.
 
 Pull requests and pushes to `main` build and test the affected apps, skipping documentation-only
-changes. Manual runs build both apps. Preview installers are available in the workflow's
-artifacts for three days.
-These CI builds are for testing; the macOS preview is not notarized.
+changes. Manual runs build both apps. Preview installers are available for three days.
 
 Licensed under the [MIT License](LICENSE).

@@ -99,7 +99,7 @@ private struct ImagePipelineTests {
             try expect(readPixels(output) == rotations[((turns % 4) + 4) % 4], "Unbounded rotation failed: \(turns)")
         }
 
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("hue-image-tests-\(UUID().uuidString)")
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("girafon-image-tests-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: folder) }
         let oriented = try processor.render(source, orientation: ImageOrientation(quarterTurns: 1))

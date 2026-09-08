@@ -2,8 +2,8 @@
 set -euo pipefail
 bash "$(dirname "$0")/test-localizations.sh"
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-BUILD_DIR="${HUE_BUILD_DIR:-$PROJECT_DIR/build}"
-TEST_ARCH="${HUE_TEST_ARCH:-$(uname -m)}"
+BUILD_DIR="${GIRAFON_BUILD_DIR:-$PROJECT_DIR/build}"
+TEST_ARCH="${GIRAFON_TEST_ARCH:-$(uname -m)}"
 case "$TEST_ARCH" in
     arm64|x86_64) ;;
     *) echo "Unsupported test architecture: $TEST_ARCH" >&2; exit 1 ;;

@@ -1,9 +1,9 @@
-Hue Camera Viewer — Installation et utilisation
+Girafon — Installation et utilisation
 Mac Intel ou Apple Silicon • macOS 13 ou ultérieur
 
-1. Ouvrez Hue-1.0-Universal.dmg.
-2. Glissez Hue dans le dossier Applications.
-3. Branchez votre caméra HUE, puis ouvrez Hue depuis Applications.
+1. Ouvrez Girafon-1.0-Universal.dmg.
+2. Glissez Girafon dans le dossier Applications.
+3. Branchez votre caméra, puis ouvrez Girafon depuis Applications.
 4. Autorisez l’accès à la caméra et, à la première capture, au Bureau si demandé.
 
 Le bouton de capture enregistre l’image en PNG sur le Bureau.

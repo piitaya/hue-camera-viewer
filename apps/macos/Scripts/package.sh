@@ -1,20 +1,20 @@
 #!/bin/bash
 set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-BUILD_DIR="${HUE_BUILD_DIR:-$PROJECT_DIR/build}"
-DESTINATION="${1:-$BUILD_DIR/Hue-1.0-Universal.dmg}"
-DMGBUILD="${HUE_DMGBUILD:-$PROJECT_DIR/.venv-dmg/bin/dmgbuild}"
+BUILD_DIR="${GIRAFON_BUILD_DIR:-$PROJECT_DIR/build}"
+DESTINATION="${1:-$BUILD_DIR/Girafon-1.0-Universal.dmg}"
+DMGBUILD="${GIRAFON_DMGBUILD:-$PROJECT_DIR/.venv-dmg/bin/dmgbuild}"
 if [[ ! -x "$DMGBUILD" ]]; then
     echo "Install the packaging tools listed in README.md before creating the DMG." >&2
     exit 1
 fi
-if [[ -z "${HUE_APP_PATH:-}" ]]; then
+if [[ -z "${GIRAFON_APP_PATH:-}" ]]; then
     "$PROJECT_DIR/Scripts/build.sh"
 fi
-APP_DIR="${HUE_APP_PATH:-$BUILD_DIR/Hue.app}"
+APP_DIR="${GIRAFON_APP_PATH:-$BUILD_DIR/Girafon.app}"
 verify_app() {
     local candidate="$1"
-    local executable="$candidate/Contents/MacOS/Hue"
+    local executable="$candidate/Contents/MacOS/Girafon"
     local minimum
     local candidate_arch
     codesign --verify --deep --strict "$candidate"
@@ -54,15 +54,15 @@ cleanup() {
 trap cleanup EXIT
 "$DMGBUILD" -s "$PROJECT_DIR/Scripts/dmg-settings.py" \
     -D "app=$APP_DIR" -D "background=$BUILD_DIR/background.tiff" \
-    "Hue Camera Viewer" "$STAGING_DIR/Hue.dmg"
-hdiutil verify "$STAGING_DIR/Hue.dmg"
+    "Girafon" "$STAGING_DIR/Girafon.dmg"
+hdiutil verify "$STAGING_DIR/Girafon.dmg"
 mkdir "$MOUNT_DIR"
-hdiutil attach -readonly -nobrowse -mountpoint "$MOUNT_DIR" "$STAGING_DIR/Hue.dmg" >/dev/null
+hdiutil attach -readonly -nobrowse -mountpoint "$MOUNT_DIR" "$STAGING_DIR/Girafon.dmg" >/dev/null
 MOUNTED=1
-verify_app "$MOUNT_DIR/Hue.app"
+verify_app "$MOUNT_DIR/Girafon.app"
 [[ "$(readlink "$MOUNT_DIR/Applications")" == /Applications ]]
 [[ ! -e "$MOUNT_DIR/LISEZ-MOI.txt" ]]
 hdiutil detach "$MOUNT_DIR" >/dev/null
 MOUNTED=0
-mv -f "$STAGING_DIR/Hue.dmg" "$DESTINATION"
+mv -f "$STAGING_DIR/Girafon.dmg" "$DESTINATION"
 echo "Created disk image: $DESTINATION"

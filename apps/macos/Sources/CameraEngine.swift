@@ -6,7 +6,7 @@ import CoreImage
 struct CameraChoice: Identifiable, Equatable {
     let id: String
     let name: String
-    let isHUE: Bool
+    let isPreferredDocumentCamera: Bool
 }
 
 enum CameraState: Equatable {
@@ -32,8 +32,8 @@ final class CameraEngine: NSObject, ObservableObject {
 
     private let demo: Bool
     private let session = AVCaptureSession()
-    private let sessionQueue = DispatchQueue(label: "fr.hue.camera.session", qos: .userInitiated)
-    private let frameQueue = DispatchQueue(label: "fr.hue.camera.frames", qos: .userInitiated)
+    private let sessionQueue = DispatchQueue(label: "fr.girafon.camera.session", qos: .userInitiated)
+    private let frameQueue = DispatchQueue(label: "fr.girafon.camera.frames", qos: .userInitiated)
     private let processor = ImageProcessor()
     private let lock = NSLock()
     private var observers: [NSObjectProtocol] = []
@@ -75,7 +75,7 @@ final class CameraEngine: NSObject, ObservableObject {
                                              object: nil, queue: .main) { [weak self] _ in
             guard let self, self.wantsRunning, self.state == .denied,
                   AVCaptureDevice.authorizationStatus(for: .video) == .authorized else { return }
-            self.resumeSelectedCamera(preferHUE: true)
+            self.resumeSelectedCamera(preferDocumentCamera: true)
         })
         observers.append(center.addObserver(forName: AVCaptureSession.runtimeErrorNotification,
                                              object: session, queue: .main) { [weak self] note in
@@ -116,7 +116,7 @@ final class CameraEngine: NSObject, ObservableObject {
         }
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
-            resumeSelectedCamera(preferHUE: true)
+            resumeSelectedCamera(preferDocumentCamera: true)
         case .notDetermined:
             state = .requestingPermission
             guard !permissionRequestInFlight else { return }
@@ -126,7 +126,7 @@ final class CameraEngine: NSObject, ObservableObject {
                     guard let self else { return }
                     self.permissionRequestInFlight = false
                     guard self.wantsRunning else { return }
-                    if granted { self.resumeSelectedCamera(preferHUE: true) }
+                    if granted { self.resumeSelectedCamera(preferDocumentCamera: true) }
                     else { self.suspend(.denied) }
                 }
             }
@@ -147,7 +147,7 @@ final class CameraEngine: NSObject, ObservableObject {
         precondition(Thread.isMainThread)
         guard !demo, wantsRunning, AVCaptureDevice.authorizationStatus(for: .video) == .authorized else { return }
         selectedDeviceID = id
-        UserDefaults.standard.set(id, forKey: "hue.cameraID")
+        UserDefaults.standard.set(id, forKey: "girafon.cameraID")
         resumeSelectedCamera()
     }
 
@@ -180,19 +180,19 @@ final class CameraEngine: NSObject, ObservableObject {
         let found = AVCaptureDevice.DiscoverySession(deviceTypes: [Self.externalCameraType, .builtInWideAngleCamera],
                                                      mediaType: .video, position: .unspecified).devices
         return found.sorted {
-            let lhs = Self.isHUE($0), rhs = Self.isHUE($1)
+            let lhs = Self.isPreferredDocumentCamera($0), rhs = Self.isPreferredDocumentCamera($1)
             if lhs != rhs { return lhs }
             return $0.localizedName.localizedStandardCompare($1.localizedName) == .orderedAscending
         }
     }
 
-    private static func isHUE(_ device: AVCaptureDevice) -> Bool {
+    private static func isPreferredDocumentCamera(_ device: AVCaptureDevice) -> Bool {
         device.localizedName.range(of: "hue", options: .caseInsensitive) != nil
     }
 
     private func refreshDevices() -> [AVCaptureDevice] {
         let found = discoverDevices()
-        devices = found.map { CameraChoice(id: $0.uniqueID, name: $0.localizedName, isHUE: Self.isHUE($0)) }
+        devices = found.map { CameraChoice(id: $0.uniqueID, name: $0.localizedName, isPreferredDocumentCamera: Self.isPreferredDocumentCamera($0)) }
         return found
     }
 
@@ -202,28 +202,28 @@ final class CameraEngine: NSObject, ObservableObject {
         // A disconnected selection remains selected. Reconnecting that device
         // resumes it, but an absent document camera never turns on the face camera.
         if let selectedDeviceID, !found.contains(where: { $0.uniqueID == selectedDeviceID }) {
-            if let hue = found.first(where: Self.isHUE) { beginCamera(hue) }
+            if let preferredCamera = found.first(where: Self.isPreferredDocumentCamera) { beginCamera(preferredCamera) }
             else { suspend(.noCamera) }
             return
         }
-        if let hue = found.first(where: Self.isHUE), hue.uniqueID != selectedDeviceID {
-            beginCamera(hue)
+        if let preferredCamera = found.first(where: Self.isPreferredDocumentCamera), preferredCamera.uniqueID != selectedDeviceID {
+            beginCamera(preferredCamera)
         } else if (state != .running && state != .starting) || selectedDeviceID == nil {
             resumeSelectedCamera()
         }
     }
 
-    private func resumeSelectedCamera(preferHUE: Bool = false) {
+    private func resumeSelectedCamera(preferDocumentCamera: Bool = false) {
         guard wantsRunning else { return }
         let found = refreshDevices()
-        let rememberedID = UserDefaults.standard.string(forKey: "hue.cameraID")
+        let rememberedID = UserDefaults.standard.string(forKey: "girafon.cameraID")
         let chosen: AVCaptureDevice?
-        if preferHUE, let hue = found.first(where: Self.isHUE) {
-            chosen = hue
+        if preferDocumentCamera, let preferredCamera = found.first(where: Self.isPreferredDocumentCamera) {
+            chosen = preferredCamera
         } else if let selectedDeviceID {
             chosen = found.first { $0.uniqueID == selectedDeviceID }
         } else {
-            chosen = found.first(where: Self.isHUE)
+            chosen = found.first(where: Self.isPreferredDocumentCamera)
                 ?? found.first { $0.uniqueID == rememberedID }
                 ?? found.first { $0.deviceType == Self.externalCameraType }
                 ?? found.first
@@ -262,7 +262,7 @@ final class CameraEngine: NSObject, ObservableObject {
     private func beginCamera(_ device: AVCaptureDevice) {
         invalidateFrames()
         selectedDeviceID = device.uniqueID
-        UserDefaults.standard.set(device.uniqueID, forKey: "hue.cameraID")
+        UserDefaults.standard.set(device.uniqueID, forKey: "girafon.cameraID")
         state = .starting
         let currentEpoch = cameraEpoch
         DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
@@ -347,7 +347,7 @@ final class CameraEngine: NSObject, ObservableObject {
     }
 
     private func cameraError(_ message: String) -> NSError {
-        NSError(domain: "fr.hue.camera", code: 1, userInfo: [NSLocalizedDescriptionKey: message])
+        NSError(domain: "fr.girafon.camera", code: 1, userInfo: [NSLocalizedDescriptionKey: message])
     }
 
     private func reportFailure(_ message: String, epoch expectedEpoch: Int) {
@@ -400,7 +400,7 @@ final class CameraEngine: NSObject, ObservableObject {
     private func startDemo() {
         invalidateFrames()
         let raw = Self.demoImage()
-        devices = [CameraChoice(id: "demo", name: NSLocalizedString("HUE HD Pro · Demo", comment: "Synthetic camera name"), isHUE: true)]
+        devices = [CameraChoice(id: "demo", name: NSLocalizedString("Demo Camera", comment: "Synthetic camera name"), isPreferredDocumentCamera: true)]
         selectedDeviceID = "demo"
         state = .starting
         lock.lock()
