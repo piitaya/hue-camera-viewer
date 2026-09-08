@@ -2,6 +2,8 @@
 
 <img src="assets/hue.png" width="96" alt="Icône de Hue Camera Viewer">
 
+[![Dernière version](https://img.shields.io/github/v/release/piitaya/hue-camera-viewer?display_name=tag&label=version)](https://github.com/piitaya/hue-camera-viewer/releases/latest)
+
 > Projet indépendant, non affilié à HUE. Cette application est compatible avec les caméras HUE.
 
 [English](README.md) | **Français**
