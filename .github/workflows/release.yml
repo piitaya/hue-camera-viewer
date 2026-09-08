@@ -1,0 +1,125 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  macos:
+    name: macOS signed and notarized DMG
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select the newest Xcode 26
+        shell: bash
+        run: |
+          xcode="$(ls -d /Applications/Xcode_26*.app | sort -V | tail -n 1)"
+          sudo xcode-select --switch "$xcode/Contents/Developer"
+          xcodebuild -version
+      - name: Read the version from the release tag
+        run: bash scripts/release-version.sh "${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
+      - name: Check that the committed version matches the tag
+        run: bash scripts/check-version.sh "$APP_VERSION"
+      - name: Import the Developer ID certificate
+        env:
+          APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          keychain="$RUNNER_TEMP/release.keychain-db"
+          keychain_password="$(uuidgen)"
+          certificate="$RUNNER_TEMP/certificate.p12"
+          printf '%s' "$APPLE_CERTIFICATE_P12" | base64 --decode > "$certificate"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          security import "$certificate" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$keychain"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$keychain_password" "$keychain" >/dev/null
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          rm -f "$certificate"
+          identity="$(security find-identity -v -p codesigning "$keychain" | awk -F'"' '/Developer ID Application/ { print $2; exit }')"
+          if [[ -z "$identity" ]]; then
+            echo "The certificate does not contain a Developer ID Application identity." >&2
+            exit 1
+          fi
+          echo "HUE_SIGNING_IDENTITY=$identity" >> "$GITHUB_ENV"
+          echo "RELEASE_KEYCHAIN=$keychain" >> "$GITHUB_ENV"
+      - name: Build and sign the universal app
+        run: bash apps/macos/Scripts/build.sh
+      - name: Test
+        run: bash apps/macos/Scripts/test.sh
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install DMG packaging tools
+        run: |
+          python -m venv "$RUNNER_TEMP/hue-dmg-tools"
+          "$RUNNER_TEMP/hue-dmg-tools/bin/python" -m pip install -r apps/macos/Scripts/requirements-dmg.txt
+      - name: Create the DMG
+        env:
+          HUE_APP_PATH: ${{ github.workspace }}/apps/macos/build/Hue.app
+          HUE_DMGBUILD: ${{ runner.temp }}/hue-dmg-tools/bin/dmgbuild
+        run: bash apps/macos/Scripts/package.sh "$GITHUB_WORKSPACE/artifacts/Hue-Camera-Viewer-macOS.dmg"
+      - name: Sign, notarize and staple the DMG
+        env:
+          APPLE_NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY }}
+          APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+        run: |
+          dmg="$GITHUB_WORKSPACE/artifacts/Hue-Camera-Viewer-macOS.dmg"
+          key="$RUNNER_TEMP/notary-key.p8"
+          printf '%s\n' "$APPLE_NOTARY_KEY" > "$key"
+          codesign --sign "$HUE_SIGNING_IDENTITY" --timestamp "$dmg"
+          xcrun notarytool submit "$dmg" --key "$key" --key-id "$APPLE_NOTARY_KEY_ID" --issuer "$APPLE_NOTARY_ISSUER_ID" --wait --timeout 30m
+          rm -f "$key"
+          xcrun stapler staple "$dmg"
+          spctl --assess --type open --context context:primary-signature --verbose "$dmg"
+      - name: Attach the DMG to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "$GITHUB_WORKSPACE/artifacts/Hue-Camera-Viewer-macOS.dmg" --clobber
+      - name: Remove the signing keychain
+        if: always()
+        run: |
+          if [[ -n "${RELEASE_KEYCHAIN:-}" && -f "$RELEASE_KEYCHAIN" ]]; then
+            security delete-keychain "$RELEASE_KEYCHAIN"
+          fi
+
+  windows:
+    name: Windows installer
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Read the version from the release tag
+        shell: bash
+        run: bash scripts/release-version.sh "${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
+      - name: Check that the committed version matches the tag
+        shell: bash
+        run: bash scripts/check-version.sh "$APP_VERSION"
+      - name: Test core logic
+        run: dotnet test apps/windows/Hue.Core.Tests --configuration Release
+      - name: Build self-contained x64 app
+        shell: pwsh
+        run: ./apps/windows/Scripts/build.ps1 -Configuration Release -Runtime win-x64 -OutputDirectory "${{ github.workspace }}/artifacts/win-x64"
+      - name: Build self-contained ARM64 app
+        shell: pwsh
+        run: ./apps/windows/Scripts/build.ps1 -Configuration Release -Runtime win-arm64 -OutputDirectory "${{ github.workspace }}/artifacts/win-arm64"
+      - name: Create the installer
+        shell: pwsh
+        run: ./apps/windows/Scripts/package.ps1 -X64AppDirectory "${{ github.workspace }}/artifacts/win-x64" -Arm64AppDirectory "${{ github.workspace }}/artifacts/win-arm64" -OutputDirectory "${{ github.workspace }}/artifacts/installers" -OutputBaseName Hue-Camera-Viewer-Windows
+      - name: Attach the installer to the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "$GITHUB_WORKSPACE/artifacts/installers/Hue-Camera-Viewer-Windows.exe" --clobber

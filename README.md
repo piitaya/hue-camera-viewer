@@ -2,6 +2,8 @@
 
 <img src="assets/hue.png" width="96" alt="Hue Camera Viewer app icon">
 
+[![Latest version](https://img.shields.io/github/v/release/piitaya/hue-camera-viewer?display_name=tag&label=version)](https://github.com/piitaya/hue-camera-viewer/releases/latest)
+
 > Independent project, not affiliated with HUE. This app is compatible with HUE cameras.
 
 **English** | [Français](README.fr.md)
@@ -18,15 +20,16 @@ freeze, and PNG captures saved to your Desktop, with a movable, collapsible tool
 
 ## Install
 
-**[Download for macOS](https://github.com/piitaya/hue-camera-viewer/releases/latest)** · **[Download for Windows](https://github.com/piitaya/hue-camera-viewer/releases/latest)**
+**[Download for macOS](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-macOS.dmg)** · **[Download for Windows](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-Windows.exe)** · [All releases](https://github.com/piitaya/hue-camera-viewer/releases)
 
 On macOS, open the DMG and drag Hue to Applications.
-On Windows, run `Hue-Setup.exe`, then open Hue from the Start menu.
+On Windows, run the `.exe` installer, then open Hue from the Start menu.
 Connect your camera and allow camera access when prompted.
 
-The macOS app is not notarized, and the unsigned Windows installer may trigger a
-Microsoft SmartScreen warning. Preview builds of every change are also available for
-three days in the [GitHub Actions](https://github.com/piitaya/hue-camera-viewer/actions/workflows/build.yml) artifacts.
+Released macOS builds are signed and notarized. The Windows installer is unsigned and may
+trigger a Microsoft SmartScreen warning: choose "More info", then "Run anyway".
+Preview builds of every change are also available for three days in the
+[GitHub Actions](https://github.com/piitaya/hue-camera-viewer/actions/workflows/build.yml) artifacts; those macOS previews are not notarized.
 
 ## Cameras
 
@@ -48,8 +51,20 @@ Hue Camera Viewer is an independent project, not affiliated with HUE or the othe
 - `apps/macos`: Swift app and DMG packaging.
 - `apps/windows`: C# app, tests, and Windows packaging.
 - `assets`: shared app icons.
+- `scripts`: version bump and CI helpers.
 
 Pull requests and pushes to `main` build and test the affected apps, skipping documentation-only
 changes. Manual runs build both apps.
+
+## Releases
+
+Bump the version with `bash scripts/set-version.sh 1.2.0`, commit, then publish a GitHub
+release whose tag looks like `v1.2.0` (or `v1.2.0-beta.1`). The
+[release workflow](.github/workflows/release.yml) checks that both apps declare the tag's
+version, builds them, and attaches `Hue-Camera-Viewer-macOS.dmg` (signed and notarized) and
+`Hue-Camera-Viewer-Windows.exe` (unsigned) to the release. The file names carry no version so
+the download links above always point at the latest release; the version is in the release
+title and in the app. The macOS signing
+secrets are described in the [macOS guide](apps/macos/README.md#release-signing).
 
 Licensed under the [MIT License](LICENSE).

@@ -4,7 +4,7 @@
 
 A minimal camera viewer for Windows 10 (2004)+ and Windows 11, in English and French.
 
-Open `Hue-Setup.exe`, then launch Hue from the Start menu and choose your camera.
+Open the `Hue-Camera-Viewer-Windows.exe` installer, then launch Hue from the Start menu and choose your camera.
 The installer automatically selects the native Intel/AMD or ARM version.
 Captures are saved as PNG files on your Desktop.
 The arrows rotate the image and the magnifier opens the zoom slider; the zoom also
@@ -36,7 +36,8 @@ dotnet test Hue.Core.Tests
 ```
 
 GitHub Actions builds one installer for both architectures.
-Download it from the workflow's artifacts to try the preview on a PC.
+Download it from the workflow's artifacts to try the preview on a PC; releases attach it as
+`Hue-Camera-Viewer-Windows.exe`.
 To package locally, build both runtimes and install Inno Setup 6.3+, then run:
 
 ```powershell

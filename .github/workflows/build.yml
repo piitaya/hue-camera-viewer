@@ -30,7 +30,7 @@ jobs:
         env:
           BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-        run: bash .github/scripts/changed-platforms.sh >> "$GITHUB_OUTPUT"
+        run: bash scripts/changed-platforms.sh >> "$GITHUB_OUTPUT"
 
   macos:
     name: macOS universal
@@ -62,12 +62,12 @@ jobs:
         env:
           HUE_APP_PATH: ${{ github.workspace }}/apps/macos/build/Hue.app
           HUE_DMGBUILD: ${{ runner.temp }}/hue-dmg-tools/bin/dmgbuild
-        run: bash apps/macos/Scripts/package.sh "$GITHUB_WORKSPACE/artifacts/Hue-macOS-Universal-preview.dmg"
+        run: bash apps/macos/Scripts/package.sh "$GITHUB_WORKSPACE/artifacts/Hue-Camera-Viewer-preview-macOS.dmg"
       - name: Upload macOS preview
         uses: actions/upload-artifact@v4
         with:
-          name: Hue-macOS-Universal-preview
-          path: artifacts/Hue-macOS-Universal-preview.dmg
+          name: Hue-Camera-Viewer-preview-macOS
+          path: artifacts/Hue-Camera-Viewer-preview-macOS.dmg
           if-no-files-found: error
           retention-days: 3
 
@@ -92,11 +92,11 @@ jobs:
         run: ./apps/windows/Scripts/build.ps1 -Configuration Release -Runtime win-arm64 -OutputDirectory "${{ github.workspace }}/artifacts/win-arm64"
       - name: Create installer
         shell: pwsh
-        run: ./apps/windows/Scripts/package.ps1 -X64AppDirectory "${{ github.workspace }}/artifacts/win-x64" -Arm64AppDirectory "${{ github.workspace }}/artifacts/win-arm64" -OutputDirectory "${{ github.workspace }}/artifacts/installers"
+        run: ./apps/windows/Scripts/package.ps1 -X64AppDirectory "${{ github.workspace }}/artifacts/win-x64" -Arm64AppDirectory "${{ github.workspace }}/artifacts/win-arm64" -OutputDirectory "${{ github.workspace }}/artifacts/installers" -OutputBaseName Hue-Camera-Viewer-preview-Windows
       - name: Install preview
         shell: pwsh
         run: |
-          $installer = Join-Path $env:GITHUB_WORKSPACE 'artifacts/installers/Hue-Setup.exe'
+          $installer = Join-Path $env:GITHUB_WORKSPACE 'artifacts/installers/Hue-Camera-Viewer-preview-Windows.exe'
           $installPath = Join-Path $env:RUNNER_TEMP 'Hue-installed'
           $process = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', ('/DIR="' + $installPath + '"')) -Wait -PassThru
           if ($process.ExitCode -ne 0) { throw "Installation failed with exit code $($process.ExitCode)." }
@@ -135,7 +135,7 @@ jobs:
           }
       - uses: actions/upload-artifact@v4
         with:
-          name: Hue-Windows-preview
-          path: artifacts/installers/Hue-Setup.exe
+          name: Hue-Camera-Viewer-preview-Windows
+          path: artifacts/installers/Hue-Camera-Viewer-preview-Windows.exe
           if-no-files-found: error
           retention-days: 3

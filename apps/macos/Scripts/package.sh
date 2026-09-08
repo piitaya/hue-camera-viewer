@@ -2,7 +2,7 @@
 set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="${HUE_BUILD_DIR:-$PROJECT_DIR/build}"
-DESTINATION="${1:-$BUILD_DIR/Hue-1.0-Universal.dmg}"
+DESTINATION="${1:-$BUILD_DIR/Hue-Camera-Viewer-macOS.dmg}"
 DMGBUILD="${HUE_DMGBUILD:-$PROJECT_DIR/.venv-dmg/bin/dmgbuild}"
 if [[ ! -x "$DMGBUILD" ]]; then
     echo "Install the packaging tools listed in README.md before creating the DMG." >&2
