@@ -48,7 +48,7 @@ if (-not (Test-Path -LiteralPath $compiler -PathType Leaf)) {
 [xml]$project = Get-Content -LiteralPath (Join-Path $PSScriptRoot '../Hue.Windows/Hue.Windows.csproj') -Raw
 $version = $project.SelectSingleNode('/Project/PropertyGroup/Version').InnerText
 if ($version -notmatch '^\d+\.\d+\.\d+(\.\d+)?$') { throw 'The app version must be a numeric release version.' }
-if (-not $OutputBaseName) { $OutputBaseName = "Hue-Camera-Viewer-$version-Windows" }
+if (-not $OutputBaseName) { $OutputBaseName = 'Hue-Camera-Viewer-Windows' }
 if ($OutputBaseName -notmatch '^[A-Za-z0-9._-]+$') { throw 'The installer name may only contain letters, digits, dots, dashes and underscores.' }
 $iconPath = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../../../assets/Hue.ico')).Path
 $arguments = @(

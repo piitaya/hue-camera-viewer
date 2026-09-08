@@ -21,7 +21,7 @@ déplaçable et repliable.
 
 ## Installation
 
-**[Télécharger pour macOS](https://github.com/piitaya/hue-camera-viewer/releases/latest)** · **[Télécharger pour Windows](https://github.com/piitaya/hue-camera-viewer/releases/latest)**
+**[Télécharger pour macOS](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-macOS.dmg)** · **[Télécharger pour Windows](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-Windows.exe)** · [Toutes les versions](https://github.com/piitaya/hue-camera-viewer/releases)
 
 Sur macOS, ouvrez le DMG et glissez Hue dans le dossier Applications.
 Sur Windows, lancez l’installateur `.exe`, puis ouvrez Hue depuis le menu Démarrer.

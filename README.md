@@ -20,7 +20,7 @@ freeze, and PNG captures saved to your Desktop, with a movable, collapsible tool
 
 ## Install
 
-**[Download for macOS](https://github.com/piitaya/hue-camera-viewer/releases/latest)** · **[Download for Windows](https://github.com/piitaya/hue-camera-viewer/releases/latest)**
+**[Download for macOS](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-macOS.dmg)** · **[Download for Windows](https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-Windows.exe)** · [All releases](https://github.com/piitaya/hue-camera-viewer/releases)
 
 On macOS, open the DMG and drag Hue to Applications.
 On Windows, run the `.exe` installer, then open Hue from the Start menu.
@@ -60,8 +60,10 @@ changes. Manual runs build both apps.
 Bump the version with `bash .github/scripts/set-version.sh 1.2.0`, commit, then publish a GitHub
 release whose tag looks like `v1.2.0` (or `v1.2.0-beta.1`). The
 [release workflow](.github/workflows/release.yml) checks that both apps declare the tag's
-version, builds them, and attaches `Hue-Camera-Viewer-<version>-macOS.dmg` (signed and notarized)
-and `Hue-Camera-Viewer-<version>-Windows.exe` (unsigned) to the release. The macOS signing
+version, builds them, and attaches `Hue-Camera-Viewer-macOS.dmg` (signed and notarized) and
+`Hue-Camera-Viewer-Windows.exe` (unsigned) to the release. The file names carry no version so
+the download links above always point at the latest release; the version is in the release
+title and in the app. The macOS signing
 secrets are described in the [macOS guide](apps/macos/README.md#release-signing).
 
 Licensed under the [MIT License](LICENSE).

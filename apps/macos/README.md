@@ -55,8 +55,7 @@ python3 -m venv .venv-dmg
 bash Scripts/package.sh
 ```
 
-The DMG is written to `build/Hue-Camera-Viewer-<version>-macOS.dmg`, with the version from
-`Resources/Info.plist`. Set `HUE_SIGNING_IDENTITY` to a Developer ID identity to sign the app
+The DMG is written to `build/Hue-Camera-Viewer-macOS.dmg`. Set `HUE_SIGNING_IDENTITY` to a Developer ID identity to sign the app
 with a secure timestamp; without it the app is signed ad hoc and cannot be notarized.
 
 ## Release signing

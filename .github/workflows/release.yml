@@ -66,14 +66,14 @@ jobs:
         env:
           HUE_APP_PATH: ${{ github.workspace }}/apps/macos/build/Hue.app
           HUE_DMGBUILD: ${{ runner.temp }}/hue-dmg-tools/bin/dmgbuild
-        run: bash apps/macos/Scripts/package.sh "$GITHUB_WORKSPACE/artifacts/Hue-Camera-Viewer-$VERSION_TAG-macOS.dmg"
+        run: bash apps/macos/Scripts/package.sh "$GITHUB_WORKSPACE/artifacts/Hue-Camera-Viewer-macOS.dmg"
       - name: Sign, notarize and staple the DMG
         env:
           APPLE_NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY }}
           APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
           APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
         run: |
-          dmg="$GITHUB_WORKSPACE/artifacts/Hue-Camera-Viewer-$VERSION_TAG-macOS.dmg"
+          dmg="$GITHUB_WORKSPACE/artifacts/Hue-Camera-Viewer-macOS.dmg"
           key="$RUNNER_TEMP/notary-key.p8"
           printf '%s\n' "$APPLE_NOTARY_KEY" > "$key"
           codesign --sign "$HUE_SIGNING_IDENTITY" --timestamp "$dmg"
@@ -84,7 +84,7 @@ jobs:
       - name: Attach the DMG to the release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "$GITHUB_WORKSPACE/artifacts/Hue-Camera-Viewer-$VERSION_TAG-macOS.dmg" --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" "$GITHUB_WORKSPACE/artifacts/Hue-Camera-Viewer-macOS.dmg" --clobber
       - name: Remove the signing keychain
         if: always()
         run: |
@@ -117,9 +117,9 @@ jobs:
         run: ./apps/windows/Scripts/build.ps1 -Configuration Release -Runtime win-arm64 -OutputDirectory "${{ github.workspace }}/artifacts/win-arm64"
       - name: Create the installer
         shell: pwsh
-        run: ./apps/windows/Scripts/package.ps1 -X64AppDirectory "${{ github.workspace }}/artifacts/win-x64" -Arm64AppDirectory "${{ github.workspace }}/artifacts/win-arm64" -OutputDirectory "${{ github.workspace }}/artifacts/installers" -OutputBaseName "Hue-Camera-Viewer-$env:VERSION_TAG-Windows"
+        run: ./apps/windows/Scripts/package.ps1 -X64AppDirectory "${{ github.workspace }}/artifacts/win-x64" -Arm64AppDirectory "${{ github.workspace }}/artifacts/win-arm64" -OutputDirectory "${{ github.workspace }}/artifacts/installers" -OutputBaseName Hue-Camera-Viewer-Windows
       - name: Attach the installer to the release
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "$GITHUB_WORKSPACE/artifacts/installers/Hue-Camera-Viewer-$VERSION_TAG-Windows.exe" --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" "$GITHUB_WORKSPACE/artifacts/installers/Hue-Camera-Viewer-Windows.exe" --clobber
