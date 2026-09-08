@@ -74,9 +74,9 @@ internal sealed class MainWindow : Window
     };
     private readonly Border _snapPreview = new()
     {
-        Background = new SolidColorBrush(ThemeColors.Green) { Opacity = 45.0 / 255 },
-        BorderBrush = new SolidColorBrush(ThemeColors.Green) { Opacity = 220.0 / 255 },
-        BorderThickness = new Thickness(2), CornerRadius = new CornerRadius(30),
+        Background = new SolidColorBrush(ThemeColors.Green) { Opacity = 0.18 },
+        BorderBrush = new SolidColorBrush(ThemeColors.Green) { Opacity = 0.7 },
+        BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(31),
         IsHitTestVisible = false, Visibility = Visibility.Collapsed
     };
     private readonly Grid _dockContent = new();
@@ -711,10 +711,6 @@ internal sealed class MainWindow : Window
         }
         DockPresentation target = AnchoredDock(_settings.DockEdge, _settings.IsDockCollapsed);
         SetDockInteraction();
-        // The pills step below the dock when it sits on the top edge.
-        Thickness pillMargin = new(14, _settings.DockEdge == DockEdge.Top && !_settings.IsDockCollapsed ? 90 : 14, 14, 14);
-        _zoomPill.Margin = pillMargin;
-        _freezePill.Margin = pillMargin;
         if (animate && DockAnimationsEnabled && _dockPresentation.Width > 0)
         {
             _dockMotion = new DockMotion(_dockPresentation, target, _motionClock.Elapsed.TotalSeconds,

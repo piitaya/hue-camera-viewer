@@ -41,7 +41,6 @@ struct ContentView: View {
                 if model.isZoomed {
                     zoomPill
                         .padding(14)
-                        .padding(.top, topPillInset)
                         .transition(.opacity)
                 }
             }
@@ -49,7 +48,6 @@ struct ContentView: View {
                 if model.isFrozen {
                     frozenPill
                         .padding(14)
-                        .padding(.top, topPillInset)
                         .transition(.opacity)
                 }
             }
@@ -153,11 +151,6 @@ struct ContentView: View {
                       height: min(max(offset.height, -limitY), limitY))
     }
 
-    /// The pills step below the dock when it sits on the top edge.
-    private var topPillInset: CGFloat {
-        model.dockEdge == .top && model.isToolbarVisible ? 72 : 0
-    }
-
     private var frozenPill: some View {
         Button(action: model.toggleFreeze) {
             HStack(spacing: 6) {
@@ -218,16 +211,9 @@ struct ContentView: View {
         return ZStack {
             if let target = previewEdge, dragCenter != nil, model.isToolbarVisible {
                 let targetSize = dockSize(for: target)
-                RoundedRectangle(cornerRadius: 29)
-                    .fill(dockAccent.opacity(0.16))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 29)
-                            .strokeBorder(.black.opacity(0.45), lineWidth: 3)
-                    }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 29)
-                            .strokeBorder(.white.opacity(0.90), style: StrokeStyle(lineWidth: 1, dash: [5, 5]))
-                    }
+                Capsule()
+                    .fill(dockAccent.opacity(0.18))
+                    .overlay(Capsule().strokeBorder(dockAccent.opacity(0.7), lineWidth: 1.5))
                     .frame(width: targetSize.width, height: targetSize.height)
                     .position(DockGeometry.center(for: target, in: size, dockSize: targetSize))
                     .animation(.spring(response: 0.30, dampingFraction: 0.82), value: target)
