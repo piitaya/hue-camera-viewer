@@ -37,8 +37,13 @@ internal sealed class MainWindow : Window
     private readonly SettingsStore _settingsStore = new();
     private AppSettings _settings;
     private readonly Grid _root = new() { Background = new SolidColorBrush(Colors.Black) };
-    private readonly Image _preview = new() { Stretch = Stretch.Fill, RenderTransformOrigin = new Point(0.5, 0.5) };
+    private readonly Image _preview = new()
+    {
+        Stretch = Stretch.Fill, RenderTransformOrigin = new Point(0.5, 0.5), ManipulationMode = ManipulationModes.Scale
+    };
     private readonly RotateTransform _rotation = new();
+    private readonly ScaleTransform _zoomScale = new();
+    private readonly TranslateTransform _pan = new();
     private readonly SoftwareBitmapSource _source = new();
     private readonly TextBlock _status = new()
     {
@@ -86,9 +91,29 @@ internal sealed class MainWindow : Window
     private readonly Button _cameraButton;
     private readonly Button _rotateLeft;
     private readonly Button _rotateRight;
+    private readonly Button _zoomButton;
     private readonly Button _capture;
     private readonly Button _collapse;
     private readonly Button _expand;
+    private readonly Rectangle _divider = new() { Width = 1, Height = 22, Margin = new Thickness(2, 0, 2, 0), Opacity = 0.16 };
+    private readonly Flyout _zoomFlyout;
+    private readonly Slider _zoomSlider = new() { Minimum = 100, Maximum = 400, StepFrequency = 5 };
+    private readonly TextBlock _zoomValue = new() { FontSize = 12, Opacity = 0.7 };
+    private readonly Button _zoomPill = new()
+    {
+        HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top,
+        Margin = new Thickness(14), Padding = new Thickness(12, 6, 6, 6), CornerRadius = new CornerRadius(16),
+        Visibility = Visibility.Collapsed
+    };
+    private readonly TextBlock _zoomPillText = new() { FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
+    private double _zoom = 1;
+    private double _panX;
+    private double _panY;
+    private bool _panning;
+    private Point _panPointerStart;
+    private double _panStartX;
+    private double _panStartY;
+    private bool _syncingZoomPanel;
     private readonly RotateTransform _gripRotation = new() { CenterX = 12, CenterY = 12 };
     private readonly RotateTransform _chevronRotation = new() { CenterX = 12, CenterY = 12 };
     private readonly RotateTransform _expandChevronRotation = new() { CenterX = 12, CenterY = 12 };
@@ -134,7 +159,29 @@ internal sealed class MainWindow : Window
         if (File.Exists(icon)) AppWindow.SetIcon(icon);
 
         _preview.Source = _source;
-        _preview.RenderTransform = _rotation;
+        TransformGroup previewTransform = new();
+        previewTransform.Children.Add(_rotation);
+        previewTransform.Children.Add(_zoomScale);
+        previewTransform.Children.Add(_pan);
+        _preview.RenderTransform = previewTransform;
+        _preview.ManipulationDelta += (_, args) =>
+        {
+            if (!_streaming) return;
+            Point anchor = _preview.TransformToVisual(_root).TransformPoint(args.Position);
+            SetZoom(_zoom * args.Delta.Scale, anchor);
+        };
+        _preview.PointerPressed += PreviewPointerPressed;
+        _preview.PointerMoved += PreviewPointerMoved;
+        _preview.PointerReleased += (_, _) => _panning = false;
+        _preview.PointerCanceled += (_, _) => _panning = false;
+        _preview.PointerCaptureLost += (_, _) => _panning = false;
+        _root.PointerWheelChanged += (_, args) =>
+        {
+            if (!_streaming) return;
+            var point = args.GetCurrentPoint(_root);
+            SetZoom(_zoom * Math.Exp(point.Properties.MouseWheelDelta / 120.0 * 0.08), point.Position);
+            args.Handled = true;
+        };
         _root.Children.Add(_preview);
         _permissions.Content = Strings.Get("Open camera settings");
         _permissions.Click += async (_, _) =>
@@ -148,6 +195,19 @@ internal sealed class MainWindow : Window
         _root.Children.Add(_overlay);
         _toast.Child = _toastText;
         _root.Children.Add(_toast);
+
+        StackPanel zoomPillContent = new() { Orientation = Orientation.Horizontal, Spacing = 6 };
+        zoomPillContent.Children.Add(_zoomPillText);
+        zoomPillContent.Children.Add(new TextBlock
+        {
+            Text = "×", FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Width = 18, Height = 18,
+            TextAlignment = TextAlignment.Center, VerticalAlignment = VerticalAlignment.Center
+        });
+        _zoomPill.Content = zoomPillContent;
+        _zoomPill.Click += (_, _) => SetZoom(1);
+        ToolTipService.SetToolTip(_zoomPill, Strings.Get("Zoom to 100 %"));
+        AutomationProperties.SetName(_zoomPill, Strings.Get("Zoom to 100 %"));
+        _root.Children.Add(_zoomPill);
 
         _grip = MakeButton("Move controls", MakeGlyph(DockIcons.Grip, rotation: _gripRotation), new DockHandleButton());
         _grip.Click += (_, _) => ShowDockMenu();
@@ -163,6 +223,9 @@ internal sealed class MainWindow : Window
         _rotateLeft.Click += (_, _) => Rotate(-1);
         _rotateRight = MakeButton("Rotate right", MakeGlyph(DockIcons.RotateRight));
         _rotateRight.Click += (_, _) => Rotate(1);
+        _zoomButton = MakeButton("Zoom", MakeGlyph(DockIcons.Zoom));
+        _zoomFlyout = BuildZoomFlyout();
+        _zoomButton.Click += (_, _) => ShowZoomPanel();
         _capture = MakeButton("Capture image", MakeGlyph(DockIcons.Capture));
         _capture.Click += async (_, _) => await CaptureAsync();
         _collapse = MakeButton("Hide controls", MakeGlyph(DockIcons.ChevronRight, 15, _chevronRotation));
@@ -173,7 +236,13 @@ internal sealed class MainWindow : Window
         _expand.VerticalAlignment = VerticalAlignment.Center;
         _expand.Click += (_, _) => ToggleDock();
 
-        foreach (Button control in new[] { _cameraButton, _rotateLeft, _rotateRight, _capture }) _controls.Children.Add(control);
+        _controls.Children.Add(_cameraButton);
+        _controls.Children.Add(_rotateLeft);
+        _controls.Children.Add(_rotateRight);
+        _controls.Children.Add(_zoomButton);
+        _controls.Children.Add(_divider);
+        _controls.Children.Add(_capture);
+        RegisterShortcuts();
         _dockStack.Children.Add(_grip);
         _dockStack.Children.Add(_controls);
         _dockStack.Children.Add(_collapse);
@@ -285,13 +354,168 @@ internal sealed class MainWindow : Window
         _preview.Width = Math.Max(1, _frameWidth * scale);
         _preview.Height = Math.Max(1, _frameHeight * scale);
         _rotation.Angle = turns * 90;
+        _zoomScale.ScaleX = _zoomScale.ScaleY = _zoom;
+        (_panX, _panY) = Zoom.ClampPan(_panX, _panY, _zoom, width * scale, height * scale, _root.ActualWidth, _root.ActualHeight);
+        _pan.X = _panX;
+        _pan.Y = _panY;
+        _zoomPill.Visibility = Zoom.IsZoomed(_zoom) && _streaming ? Visibility.Visible : Visibility.Collapsed;
+        _zoomPillText.Text = $"{Zoom.Percent(_zoom)} %";
+        SyncZoomPanel();
     }
 
-    private void Rotate(int direction)
+    private void Rotate(int direction) => SetRotation(_settings.RotationQuarterTurns + direction);
+
+    private void SetRotation(int quarterTurns)
     {
-        _settings = _settings with { RotationQuarterTurns = Rotation.Normalize(_settings.RotationQuarterTurns + direction) };
+        _settings = _settings with { RotationQuarterTurns = Rotation.Normalize(quarterTurns) };
         LayoutPreview();
         SaveSettings();
+    }
+
+    // The zoom magnifies the preview only; captures keep the full image.
+    // With an anchor, the image point under the pointer stays in place: the
+    // pointer's offset from the centre scales with the zoom, the pan absorbs the rest.
+    private void SetZoom(double zoom, Point? anchor = null)
+    {
+        double previous = _zoom;
+        _zoom = Zoom.Clamp(zoom);
+        if (anchor is { } point && previous > 0)
+        {
+            double ratio = _zoom / previous;
+            double anchorX = point.X - _root.ActualWidth / 2;
+            double anchorY = point.Y - _root.ActualHeight / 2;
+            _panX = anchorX - (anchorX - _panX) * ratio;
+            _panY = anchorY - (anchorY - _panY) * ratio;
+        }
+        LayoutPreview();
+    }
+
+    private void PreviewPointerPressed(object sender, PointerRoutedEventArgs args)
+    {
+        var point = args.GetCurrentPoint(_root);
+        if (!Zoom.IsZoomed(_zoom) || !point.Properties.IsLeftButtonPressed) return;
+        _panning = true;
+        _panPointerStart = point.Position;
+        _panStartX = _panX;
+        _panStartY = _panY;
+        _preview.CapturePointer(args.Pointer);
+    }
+
+    private void PreviewPointerMoved(object sender, PointerRoutedEventArgs args)
+    {
+        if (!_panning) return;
+        Point point = args.GetCurrentPoint(_root).Position;
+        _panX = _panStartX + point.X - _panPointerStart.X;
+        _panY = _panStartY + point.Y - _panPointerStart.Y;
+        LayoutPreview();
+        args.Handled = true;
+    }
+
+    private Flyout BuildZoomFlyout()
+    {
+        StackPanel panel = new() { Spacing = 8, Width = 216 };
+        Grid zoomHeader = new();
+        zoomHeader.Children.Add(new TextBlock { Text = Strings.Get("Zoom"), FontSize = 12, Opacity = 0.7 });
+        _zoomValue.HorizontalAlignment = HorizontalAlignment.Right;
+        zoomHeader.Children.Add(_zoomValue);
+        panel.Children.Add(zoomHeader);
+        _zoomSlider.ValueChanged += (_, args) => { if (!_syncingZoomPanel) SetZoom(args.NewValue / 100); };
+        AutomationProperties.SetName(_zoomSlider, Strings.Get("Zoom"));
+        panel.Children.Add(_zoomSlider);
+        Flyout flyout = new() { Content = panel };
+        flyout.Opened += (_, _) => _zoomButton.Background = new SolidColorBrush(Colors.Gray) { Opacity = 0.25 };
+        flyout.Closed += (_, _) => _zoomButton.Background = new SolidColorBrush(Colors.Transparent);
+        return flyout;
+    }
+
+    private void SyncZoomPanel()
+    {
+        _syncingZoomPanel = true;
+        try
+        {
+            double sliderValue = Zoom.Percent(_zoom);
+            if (Math.Abs(_zoomSlider.Value - sliderValue) > 0.5) _zoomSlider.Value = sliderValue;
+            _zoomValue.Text = $"{Zoom.Percent(_zoom)} %";
+        }
+        finally { _syncingZoomPanel = false; }
+    }
+
+    private void ShowZoomPanel()
+    {
+        SyncZoomPanel();
+        _zoomFlyout.Placement = _settings.DockEdge switch
+        {
+            DockEdge.Top => Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.Bottom,
+            DockEdge.Left => Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.Right,
+            DockEdge.Right => Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.Left,
+            _ => Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.Top
+        };
+        _zoomFlyout.ShowAt(_zoomButton);
+    }
+
+    private void RegisterShortcuts()
+    {
+        AddShortcut(VirtualKey.S, VirtualKeyModifiers.Control, async () => await CaptureAsync());
+        AddShortcut(VirtualKey.Left, VirtualKeyModifiers.Control, () => { if (_streaming) Rotate(-1); });
+        AddShortcut(VirtualKey.Right, VirtualKeyModifiers.Control, () => { if (_streaming) Rotate(1); });
+        AddShortcut(VirtualKey.T, VirtualKeyModifiers.Control, ToggleDock);
+        foreach (VirtualKey key in new[] { VirtualKey.Add, (VirtualKey)0xBB })
+            AddShortcut(key, VirtualKeyModifiers.Control, () => SetZoom(Zoom.In(_zoom)));
+        foreach (VirtualKey key in new[] { VirtualKey.Subtract, (VirtualKey)0xBD })
+            AddShortcut(key, VirtualKeyModifiers.Control, () => SetZoom(Zoom.Out(_zoom)));
+        foreach (VirtualKey key in new[] { VirtualKey.Number0, VirtualKey.NumberPad0 })
+            AddShortcut(key, VirtualKeyModifiers.Control, () => SetZoom(1));
+    }
+
+    private void AddShortcut(VirtualKey key, VirtualKeyModifiers modifiers, Action action)
+    {
+        KeyboardAccelerator accelerator = new() { Key = key, Modifiers = modifiers };
+        accelerator.Invoked += (_, args) =>
+        {
+            args.Handled = true;
+            action();
+        };
+        _root.KeyboardAccelerators.Add(accelerator);
+    }
+
+    private async Task ShowShortcutsAsync()
+    {
+        (string Action, string Keys)[] shortcuts =
+        {
+            ("Capture image", "Ctrl S"),
+            ("Rotate left / right", "Ctrl ← / Ctrl →"),
+            ("Zoom in / out / 100 %", "Ctrl + / Ctrl − / Ctrl 0"),
+            ("Hide or show controls", "Ctrl T")
+        };
+        StackPanel list = new() { Spacing = 10, MinWidth = 320 };
+        foreach (var (action, keys) in shortcuts)
+        {
+            Grid row = new();
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            TextBlock name = new() { Text = Strings.Get(action), VerticalAlignment = VerticalAlignment.Center };
+            Border keyCap = new()
+            {
+                Padding = new Thickness(8, 3, 8, 3), CornerRadius = new CornerRadius(6),
+                Background = new SolidColorBrush(Colors.Gray) { Opacity = 0.2 },
+                Child = new TextBlock { Text = keys, FontSize = 12 }
+            };
+            Grid.SetColumn(keyCap, 1);
+            row.Children.Add(name);
+            row.Children.Add(keyCap);
+            list.Children.Add(row);
+        }
+        list.Children.Add(new TextBlock
+        {
+            Text = Strings.Get("Zoom also follows the mouse wheel or a pinch on the touchpad."),
+            FontSize = 12, Opacity = 0.7, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0)
+        });
+        ContentDialog dialog = new()
+        {
+            Title = Strings.Get("Keyboard shortcuts"), Content = list,
+            CloseButtonText = Strings.Get("Close"), XamlRoot = _root.XamlRoot
+        };
+        await dialog.ShowAsync();
     }
 
     private async Task CaptureAsync()
@@ -349,6 +573,8 @@ internal sealed class MainWindow : Window
         _capture.IsEnabled = ready && !_capturing;
         _rotateLeft.IsEnabled = ready;
         _rotateRight.IsEnabled = ready;
+        _zoomButton.IsEnabled = ready;
+        _zoomPill.Visibility = Zoom.IsZoomed(_zoom) && ready ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void UpdateCameraLabel()
@@ -375,6 +601,10 @@ internal sealed class MainWindow : Window
             menu.Items.Add(item);
         }
         if (menu.Items.Count == 0) menu.Items.Add(new MenuFlyoutItem { Text = Strings.Get("No cameras found"), IsEnabled = false });
+        menu.Items.Add(new MenuFlyoutSeparator());
+        MenuFlyoutItem shortcuts = new() { Text = Strings.Get("Keyboard shortcuts…") };
+        shortcuts.Click += async (_, _) => await ShowShortcutsAsync();
+        menu.Items.Add(shortcuts);
         menu.ShowAt(_cameraButton);
     }
 
@@ -403,7 +633,7 @@ internal sealed class MainWindow : Window
     private static (double Width, double Height) DockSize(DockEdge edge, bool collapsed)
     {
         bool horizontal = edge is DockEdge.Top or DockEdge.Bottom;
-        return collapsed ? (horizontal ? (46, 26) : (26, 46)) : (horizontal ? (312, 62) : (62, 312));
+        return collapsed ? (horizontal ? (46, 26) : (26, 46)) : (horizontal ? (373, 62) : (62, 373));
     }
 
     private DockPresentation AnchoredDock(DockEdge edge, bool collapsed)
@@ -443,7 +673,7 @@ internal sealed class MainWindow : Window
     {
         bool expanded = !_settings.IsDockCollapsed;
         _dockStack.IsHitTestVisible = expanded;
-        foreach (Button button in new[] { _grip, _cameraButton, _rotateLeft, _rotateRight, _capture, _collapse })
+        foreach (Button button in new[] { _grip, _cameraButton, _rotateLeft, _rotateRight, _zoomButton, _capture, _collapse })
         {
             button.IsTabStop = expanded;
             AutomationProperties.SetAccessibilityView(button, expanded ? AccessibilityView.Control : AccessibilityView.Raw);
@@ -467,8 +697,11 @@ internal sealed class MainWindow : Window
         bool horizontal = presentation.Edge is DockEdge.Top or DockEdge.Bottom;
         _gripRotation.Angle = horizontal ? 0 : 90;
         _dockStack.Orientation = _controls.Orientation = horizontal ? Orientation.Horizontal : Orientation.Vertical;
-        _dockStack.Width = horizontal ? 294 : 44;
-        _dockStack.Height = horizontal ? 44 : 294;
+        _divider.Width = horizontal ? 1 : 22;
+        _divider.Height = horizontal ? 22 : 1;
+        _divider.Margin = horizontal ? new Thickness(2, 0, 2, 0) : new Thickness(0, 2, 0, 2);
+        _dockStack.Width = horizontal ? 355 : 44;
+        _dockStack.Height = horizontal ? 44 : 355;
         _dockStack.Opacity = presentation.ExpandedOpacity;
         _expand.Width = horizontal ? 44 : 24;
         _expand.Height = horizontal ? 24 : 44;
@@ -626,6 +859,12 @@ internal sealed class MainWindow : Window
         _dock.BorderBrush = new SolidColorBrush(dark ? ColorHelper.FromArgb(255, 85, 90, 91) : ColorHelper.FromArgb(255, 203, 208, 207));
         Brush foreground = new SolidColorBrush(dark ? ColorHelper.FromArgb(255, 241, 244, 243) : ColorHelper.FromArgb(255, 35, 45, 43));
         foreach (Shape shape in _themeShapes) shape.Stroke = foreground;
+        _divider.Fill = foreground;
+        Brush pillSurface = new SolidColorBrush(dark ? ColorHelper.FromArgb(235, 35, 38, 40) : ColorHelper.FromArgb(235, 246, 247, 245));
+        Brush pillBorder = new SolidColorBrush(dark ? ColorHelper.FromArgb(255, 85, 90, 91) : ColorHelper.FromArgb(255, 203, 208, 207));
+        _zoomPill.Background = pillSurface;
+        _zoomPill.BorderBrush = pillBorder;
+        _zoomPill.Foreground = foreground;
     }
 
     private Viewbox MakeGlyph(string data, double size = 21, RotateTransform? rotation = null)
@@ -711,6 +950,7 @@ internal sealed class MainWindow : Window
                 throw new InvalidOperationException($"Capture {turns} has incorrect dimensions.");
             captures.Add(capture);
         }
+        await CheckImagePanelAsync(captures);
         await CheckDockMotionAsync();
         _settings = _settings with { RotationQuarterTurns = 0, DockEdge = DockEdge.Right, IsDockCollapsed = false };
         _root.RequestedTheme = ElementTheme.Dark;
@@ -728,6 +968,27 @@ internal sealed class MainWindow : Window
         LayoutDock(false);
         await SaveScreenshotAsync("ui-left-light.png");
         await FinishSmokeTestAsync(true, null, captures);
+    }
+
+    private async Task CheckImagePanelAsync(List<string> captures)
+    {
+        // The dock's rotation buttons drive the same setting as the arrow keys.
+        _settings = _settings with { RotationQuarterTurns = 0 };
+        LayoutPreview();
+        Rotate(1);
+        if (_rotation.Angle != 90 || _settings.RotationQuarterTurns != 1)
+            throw new InvalidOperationException("The preview did not follow the rotation.");
+
+        SetZoom(2.5);
+        if (_zoom != 2.5 || _zoomPill.Visibility != Visibility.Visible || _zoomPillText.Text != "250 %" || _zoomScale.ScaleX != 2.5)
+            throw new InvalidOperationException("The zoom did not apply to the preview and its pill.");
+        _panX = 10_000;
+        LayoutPreview();
+        if (_panX > _preview.Height * 2.5 / 2) throw new InvalidOperationException("Panning escaped the magnified image.");
+        SetZoom(9);
+        if (_zoom != Zoom.Maximum) throw new InvalidOperationException("The zoom escaped its range.");
+        SetZoom(1);
+        if (_zoomPill.Visibility != Visibility.Collapsed || _panX != 0) throw new InvalidOperationException("The zoom did not reset.");
     }
 
     private async Task CheckDockMotionAsync()
@@ -824,8 +1085,8 @@ internal sealed class MainWindow : Window
     {
         DockPresentation expected = AnchoredDock(_settings.DockEdge, _settings.IsDockCollapsed);
         bool horizontal = _settings.DockEdge is DockEdge.Top or DockEdge.Bottom;
-        double expectedWidth = _settings.IsDockCollapsed ? (horizontal ? 46 : 26) : (horizontal ? 312 : 62);
-        double expectedHeight = _settings.IsDockCollapsed ? (horizontal ? 26 : 46) : (horizontal ? 62 : 312);
+        double expectedWidth = _settings.IsDockCollapsed ? (horizontal ? 46 : 26) : (horizontal ? 373 : 62);
+        double expectedHeight = _settings.IsDockCollapsed ? (horizontal ? 26 : 46) : (horizontal ? 62 : 373);
         _root.UpdateLayout();
         if (Math.Abs(_dock.ActualWidth - expectedWidth) > 0.1 || Math.Abs(_dock.ActualHeight - expectedHeight) > 0.1
             || Math.Abs(_dockPosition.X - expected.X) > 0.1 || Math.Abs(_dockPosition.Y - expected.Y) > 0.1

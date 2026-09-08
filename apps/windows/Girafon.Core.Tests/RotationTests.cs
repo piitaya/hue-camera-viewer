@@ -41,4 +41,29 @@ public sealed class RotationTests
         Assert.Equal(3, Rotation.CounterClockwise(int.MinValue));
         Assert.Throws<ArgumentException>(() => Rotation.RotateBgra([0, 0, 0, 0], 2, 3, 0));
     }
+
+    [Fact]
+    public void ZoomStaysWithinItsRangeAndSnapsBackToOne()
+    {
+        Assert.Equal(1.0, Zoom.Clamp(0.2));
+        Assert.Equal(1.0, Zoom.Clamp(1.0005));
+        Assert.Equal(4.0, Zoom.Clamp(9));
+        Assert.Equal(1.0, Zoom.Clamp(double.NaN));
+        Assert.Equal(1.25, Zoom.In(1));
+        Assert.Equal(1.0, Zoom.Out(1.25), 6);
+        Assert.Equal(4.0, Zoom.In(3.9));
+        Assert.False(Zoom.IsZoomed(1));
+        Assert.True(Zoom.IsZoomed(1.01));
+        Assert.Equal(250, Zoom.Percent(2.5));
+    }
+
+    [Fact]
+    public void PanStopsAtTheMagnifiedImageEdges()
+    {
+        Assert.Equal((0.0, 0.0), Zoom.ClampPan(50, -50, 1, 800, 600, 800, 600));
+        Assert.Equal((400.0, 300.0), Zoom.ClampPan(1000, 1000, 2, 800, 600, 800, 600));
+        Assert.Equal((-400.0, -300.0), Zoom.ClampPan(-1000, -1000, 2, 800, 600, 800, 600));
+        // A frame narrower than the viewport cannot pan sideways until it outgrows it.
+        Assert.Equal((0.0, 150.0), Zoom.ClampPan(30, 500, 1.5, 400, 600, 800, 600));
+    }
 }

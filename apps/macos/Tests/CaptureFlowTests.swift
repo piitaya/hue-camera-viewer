@@ -99,6 +99,16 @@ private struct CaptureFlowTests {
         let files = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
         try expect(files.count == 1 && files[0].pathExtension == "png", "One capture request must produce exactly one PNG")
         try expect(!model.isSaving && !model.camera.isTransforming, "Capture or transformation remained pending")
-        print("PASS: immediate rotation/capture queues one PNG, preserves native dimensions, matches the rotated pixels and preview, and uses only an isolated demo directory.")
+
+        // The zoom is a display setting and never touches the camera frame.
+        model.setZoom(2.5)
+        try expect(model.isZoomed && model.zoomPercent == 250, "Zoom did not apply")
+        model.setZoom(9)
+        try expect(model.zoom == AppModel.zoomRange.upperBound, "Zoom escaped its range")
+        model.resetZoom()
+        try expect(!model.isZoomed, "Zoom did not reset")
+        try expect(model.camera.image.map(rgbaBytes) == rgbaBytes(currentPreview), "Zooming must not change the camera frame")
+
+        print("PASS: immediate rotation/capture queues one PNG, preserves native dimensions, matches the rotated pixels and preview, zooms the preview without touching the frame, and uses only an isolated demo directory.")
     }
 }

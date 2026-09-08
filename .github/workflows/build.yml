@@ -36,14 +36,16 @@ jobs:
     name: macOS universal
     needs: changes
     if: needs.changes.outputs.macos == 'true'
-    runs-on: macos-15
+    # The Icon Composer .icon bundle compiles only on a macOS 26 host.
+    runs-on: macos-26
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Select Xcode 26.3
+      - name: Select the newest Xcode 26
         shell: bash
         run: |
-          sudo xcode-select --switch /Applications/Xcode_26.3.app/Contents/Developer
+          xcode="$(ls -d /Applications/Xcode_26*.app | sort -V | tail -n 1)"
+          sudo xcode-select --switch "$xcode/Contents/Developer"
           xcodebuild -version
       - name: Build universal app
         run: bash apps/macos/Scripts/build.sh

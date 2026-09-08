@@ -99,6 +99,9 @@ private struct ImagePipelineTests {
             try expect(readPixels(output) == rotations[((turns % 4) + 4) % 4], "Unbounded rotation failed: \(turns)")
         }
 
+        let roundTrip = try JSONDecoder().decode(ImageOrientation.self, from: JSONEncoder().encode(ImageOrientation(quarterTurns: 3)))
+        try expect(roundTrip == ImageOrientation(quarterTurns: 3), "Orientation did not survive encoding")
+
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("girafon-image-tests-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: folder) }
@@ -128,6 +131,6 @@ private struct ImagePipelineTests {
         } catch ImagePipelineError.invalidImageExtent {
             // Expected: invalid camera frames must not reach Core Image rendering.
         }
-        print("PASS: 4 clockwise rotations, shifted extents, rotation wrapping, 24 unique atomic PNG saves and roundtrips, invalid extent.")
+        print("PASS: 4 clockwise rotations, shifted extents, rotation wrapping, orientation encoding, 24 unique atomic PNG saves and roundtrips, invalid extent.")
     }
 }

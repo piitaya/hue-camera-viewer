@@ -34,6 +34,15 @@ internal static class Strings
         ["Image saved to Desktop"] = "Image enregistrée sur le Bureau",
         ["Image saved"] = "Image enregistrée",
         ["Could not save the image. Check the folder permissions and available space."] = "Impossible d’enregistrer l’image. Vérifiez les autorisations du dossier et l’espace disponible.",
-        ["Settings could not be saved."] = "Les réglages n’ont pas pu être enregistrés."
+        ["Settings could not be saved."] = "Les réglages n’ont pas pu être enregistrés.",
+        ["Zoom"] = "Zoom",
+        ["Zoom to 100 %"] = "Zoom à 100 %",
+        ["Keyboard shortcuts…"] = "Raccourcis clavier…",
+        ["Keyboard shortcuts"] = "Raccourcis clavier",
+        ["Rotate left / right"] = "Tourner à gauche / à droite",
+        ["Zoom in / out / 100 %"] = "Zoom avant / arrière / 100 %",
+        ["Hide or show controls"] = "Masquer ou afficher les commandes",
+        ["Zoom also follows the mouse wheel or a pinch on the touchpad."] = "Le zoom suit aussi la molette de la souris ou le pincement sur le pavé tactile.",
+        ["Close"] = "Fermer"
     };
 }

@@ -7,6 +7,7 @@ Mac Intel ou Apple Silicon • macOS 13 ou ultérieur
 4. Autorisez l’accès à la caméra et, à la première capture, au Bureau si demandé.
 
 Le bouton de capture enregistre l’image en PNG sur le Bureau.
-Les boutons de rotation tournent l’image à gauche ou à droite.
+Les flèches tournent l’image ; la loupe ouvre le réglage du zoom, la molette ou le pincement zooment aussi.
 Glissez la poignée du dock pour déplacer les commandes vers un bord de la fenêtre.
 Le chevron permet de masquer ou de réafficher les commandes.
+Raccourcis : ⌘S capture, ⌘← et ⌘→ pivotent, ⌘+ ⌘− ⌘0 zooment, ⌥⌘T masque les commandes.

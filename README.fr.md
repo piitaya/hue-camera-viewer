@@ -4,7 +4,7 @@
 
 [English](README.md) | **Français**
 
-Un visualiseur de documents simple : affichage en direct, rotation à 90° et captures
+Un visualiseur de documents simple : affichage en direct, rotation et zoom, et captures
 PNG enregistrées sur le Bureau, avec une barre d’outils déplaçable et repliable.
 
 **Français et anglais · Applications natives pour macOS et Windows**

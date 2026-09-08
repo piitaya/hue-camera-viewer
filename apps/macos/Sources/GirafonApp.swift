@@ -19,17 +19,27 @@ struct GirafonApp: App {
             CommandGroup(replacing: .newItem) { }
             CommandGroup(replacing: .saveItem) {
                 Button("Capture to Desktop") { model.capture() }
+                    .keyboardShortcut("s", modifiers: .command)
                     .disabled(!model.canRequestCapture)
                 Button("Show Last Capture") { model.revealLastCapture() }
                     .disabled(model.lastCapture == nil)
             }
             CommandMenu("Image") {
                 Button("Rotate Left") { model.rotate(-1) }
+                    .keyboardShortcut(.leftArrow, modifiers: .command)
                 Button("Rotate Right") { model.rotate(1) }
-                Divider()
+                    .keyboardShortcut(.rightArrow, modifiers: .command)
                 Button("Reset Orientation") { model.resetOrientation() }
                 Divider()
+                Button("Zoom In") { model.zoomIn() }
+                    .keyboardShortcut("+", modifiers: .command)
+                Button("Zoom Out") { model.zoomOut() }
+                    .keyboardShortcut("-", modifiers: .command)
+                Button("Zoom to 100 %") { model.resetZoom() }
+                    .keyboardShortcut("0", modifiers: .command)
+                Divider()
                 Button(model.isToolbarVisible ? NSLocalizedString("Hide Controls", comment: "Image menu when controls are visible") : NSLocalizedString("Show Controls", comment: "Image menu when controls are hidden")) { model.toggleToolbar() }
+                    .keyboardShortcut("t", modifiers: [.command, .option])
             }
             CommandGroup(replacing: .help) {
                 Button("About Girafon") {
@@ -37,9 +47,11 @@ struct GirafonApp: App {
                         .applicationName: "Girafon",
                         .applicationVersion: "1.0",
                         .version: "1",
-                        .credits: NSAttributedString(string: NSLocalizedString("A simple viewer for your documents.\nCamera • Rotation • Capture to Desktop", comment: "About panel description"))
+                        .credits: NSAttributedString(string: NSLocalizedString("A simple viewer for your documents.\nCamera • Rotation • Zoom • Capture to Desktop", comment: "About panel description"))
                     ])
                 }
+                Divider()
+                Button("Keyboard Shortcuts…") { model.isShowingShortcuts = true }
             }
         }
     }
