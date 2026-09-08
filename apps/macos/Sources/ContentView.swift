@@ -458,7 +458,7 @@ struct ContentView: View {
         case .starting, .running:
             return NSLocalizedString("Preparing the preview.", comment: "Camera empty state")
         case .denied:
-            return NSLocalizedString("Enable Girafon in System Settings → Privacy & Security → Camera.", comment: "Camera empty state")
+            return NSLocalizedString("Enable Hue in System Settings → Privacy & Security → Camera.", comment: "Camera empty state")
         case .failed(let message):
             return message
         }

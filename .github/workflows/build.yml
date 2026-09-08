@@ -56,18 +56,18 @@ jobs:
           python-version: '3.12'
       - name: Install DMG packaging tools
         run: |
-          python -m venv "$RUNNER_TEMP/girafon-dmg-tools"
-          "$RUNNER_TEMP/girafon-dmg-tools/bin/python" -m pip install -r apps/macos/Scripts/requirements-dmg.txt
+          python -m venv "$RUNNER_TEMP/hue-dmg-tools"
+          "$RUNNER_TEMP/hue-dmg-tools/bin/python" -m pip install -r apps/macos/Scripts/requirements-dmg.txt
       - name: Create preview DMG
         env:
-          GIRAFON_APP_PATH: ${{ github.workspace }}/apps/macos/build/Girafon.app
-          GIRAFON_DMGBUILD: ${{ runner.temp }}/girafon-dmg-tools/bin/dmgbuild
-        run: bash apps/macos/Scripts/package.sh "$GITHUB_WORKSPACE/artifacts/Girafon-macOS-Universal-preview.dmg"
+          HUE_APP_PATH: ${{ github.workspace }}/apps/macos/build/Hue.app
+          HUE_DMGBUILD: ${{ runner.temp }}/hue-dmg-tools/bin/dmgbuild
+        run: bash apps/macos/Scripts/package.sh "$GITHUB_WORKSPACE/artifacts/Hue-macOS-Universal-preview.dmg"
       - name: Upload macOS preview
         uses: actions/upload-artifact@v4
         with:
-          name: Girafon-macOS-Universal-preview
-          path: artifacts/Girafon-macOS-Universal-preview.dmg
+          name: Hue-macOS-Universal-preview
+          path: artifacts/Hue-macOS-Universal-preview.dmg
           if-no-files-found: error
           retention-days: 3
 
@@ -83,7 +83,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - name: Test core logic
-        run: dotnet test apps/windows/Girafon.Core.Tests --configuration Release
+        run: dotnet test apps/windows/Hue.Core.Tests --configuration Release
       - name: Build self-contained x64 app
         shell: pwsh
         run: ./apps/windows/Scripts/build.ps1 -Configuration Release -Runtime win-x64 -OutputDirectory "${{ github.workspace }}/artifacts/win-x64"
@@ -96,11 +96,11 @@ jobs:
       - name: Install preview
         shell: pwsh
         run: |
-          $installer = Join-Path $env:GITHUB_WORKSPACE 'artifacts/installers/Girafon-Setup.exe'
-          $installPath = Join-Path $env:RUNNER_TEMP 'Girafon-installed'
+          $installer = Join-Path $env:GITHUB_WORKSPACE 'artifacts/installers/Hue-Setup.exe'
+          $installPath = Join-Path $env:RUNNER_TEMP 'Hue-installed'
           $process = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', ('/DIR="' + $installPath + '"')) -Wait -PassThru
           if ($process.ExitCode -ne 0) { throw "Installation failed with exit code $($process.ExitCode)." }
-          foreach ($file in 'Girafon.exe', 'coreclr.dll') {
+          foreach ($file in 'Hue.exe', 'coreclr.dll') {
             $expected = Get-FileHash (Join-Path $env:GITHUB_WORKSPACE "artifacts/win-x64/$file")
             $installed = Get-FileHash (Join-Path $installPath $file)
             if ($installed.Hash -ne $expected.Hash) { throw "The installer did not select the native x64 $file." }
@@ -108,9 +108,9 @@ jobs:
       - name: Test the packaged app
         shell: pwsh
         run: |
-          $capturePath = Join-Path $env:RUNNER_TEMP 'girafon-smoke'
+          $capturePath = Join-Path $env:RUNNER_TEMP 'hue-smoke'
           New-Item -ItemType Directory -Force $capturePath | Out-Null
-          $appPath = Join-Path $env:RUNNER_TEMP 'Girafon-installed/Girafon.exe'
+          $appPath = Join-Path $env:RUNNER_TEMP 'Hue-installed/Hue.exe'
           $process = Start-Process -FilePath $appPath -ArgumentList @('--smoke-test', '--capture-directory', ('"' + $capturePath + '"')) -PassThru
           if (-not $process.WaitForExit(90000)) {
             $process.Kill()
@@ -126,16 +126,16 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          $installPath = Join-Path $env:RUNNER_TEMP 'Girafon-installed'
+          $installPath = Join-Path $env:RUNNER_TEMP 'Hue-installed'
           $uninstaller = Join-Path $installPath 'unins000.exe'
           if (Test-Path $uninstaller) {
             $process = Start-Process -FilePath $uninstaller -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -Wait -PassThru
             if ($process.ExitCode -ne 0) { throw "Uninstall failed with exit code $($process.ExitCode)." }
-            if (Test-Path (Join-Path $installPath 'Girafon.exe')) { throw 'Uninstall left the app executable behind.' }
+            if (Test-Path (Join-Path $installPath 'Hue.exe')) { throw 'Uninstall left the app executable behind.' }
           }
       - uses: actions/upload-artifact@v4
         with:
-          name: Girafon-Windows-preview
-          path: artifacts/installers/Girafon-Setup.exe
+          name: Hue-Windows-preview
+          path: artifacts/installers/Hue-Setup.exe
           if-no-files-found: error
           retention-days: 3

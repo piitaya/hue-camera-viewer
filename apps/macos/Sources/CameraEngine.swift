@@ -32,8 +32,8 @@ final class CameraEngine: NSObject, ObservableObject {
 
     private let demo: Bool
     private let session = AVCaptureSession()
-    private let sessionQueue = DispatchQueue(label: "fr.girafon.camera.session", qos: .userInitiated)
-    private let frameQueue = DispatchQueue(label: "fr.girafon.camera.frames", qos: .userInitiated)
+    private let sessionQueue = DispatchQueue(label: "fr.hue.camera.session", qos: .userInitiated)
+    private let frameQueue = DispatchQueue(label: "fr.hue.camera.frames", qos: .userInitiated)
     private let processor = ImageProcessor()
     private let lock = NSLock()
     private var observers: [NSObjectProtocol] = []
@@ -147,7 +147,7 @@ final class CameraEngine: NSObject, ObservableObject {
         precondition(Thread.isMainThread)
         guard !demo, wantsRunning, AVCaptureDevice.authorizationStatus(for: .video) == .authorized else { return }
         selectedDeviceID = id
-        UserDefaults.standard.set(id, forKey: "girafon.cameraID")
+        UserDefaults.standard.set(id, forKey: "hue.cameraID")
         resumeSelectedCamera()
     }
 
@@ -216,7 +216,7 @@ final class CameraEngine: NSObject, ObservableObject {
     private func resumeSelectedCamera(preferDocumentCamera: Bool = false) {
         guard wantsRunning else { return }
         let found = refreshDevices()
-        let rememberedID = UserDefaults.standard.string(forKey: "girafon.cameraID")
+        let rememberedID = UserDefaults.standard.string(forKey: "hue.cameraID")
         let chosen: AVCaptureDevice?
         if preferDocumentCamera, let preferredCamera = found.first(where: Self.isPreferredDocumentCamera) {
             chosen = preferredCamera
@@ -262,7 +262,7 @@ final class CameraEngine: NSObject, ObservableObject {
     private func beginCamera(_ device: AVCaptureDevice) {
         invalidateFrames()
         selectedDeviceID = device.uniqueID
-        UserDefaults.standard.set(device.uniqueID, forKey: "girafon.cameraID")
+        UserDefaults.standard.set(device.uniqueID, forKey: "hue.cameraID")
         state = .starting
         let currentEpoch = cameraEpoch
         DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
@@ -347,7 +347,7 @@ final class CameraEngine: NSObject, ObservableObject {
     }
 
     private func cameraError(_ message: String) -> NSError {
-        NSError(domain: "fr.girafon.camera", code: 1, userInfo: [NSLocalizedDescriptionKey: message])
+        NSError(domain: "fr.hue.camera", code: 1, userInfo: [NSLocalizedDescriptionKey: message])
     }
 
     private func reportFailure(_ message: String, epoch expectedEpoch: Int) {

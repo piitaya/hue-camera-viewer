@@ -4,21 +4,21 @@
 <dict>
     <key>CFBundleDevelopmentRegion</key><string>en</string>
     <key>CFBundleLocalizations</key><array><string>en</string><string>fr</string></array>
-    <key>CFBundleDisplayName</key><string>Girafon</string>
-    <key>CFBundleName</key><string>Girafon</string>
-    <key>CFBundleExecutable</key><string>Girafon</string>
-    <key>CFBundleIdentifier</key><string>local.girafon.viewer</string>
+    <key>CFBundleDisplayName</key><string>Hue</string>
+    <key>CFBundleName</key><string>Hue</string>
+    <key>CFBundleExecutable</key><string>Hue</string>
+    <key>CFBundleIdentifier</key><string>local.hue.viewer</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>1.0</string>
     <key>CFBundleVersion</key><string>1</string>
-    <key>CFBundleIconFile</key><string>Girafon</string>
-    <key>CFBundleIconName</key><string>Girafon</string>
+    <key>CFBundleIconFile</key><string>Hue</string>
+    <key>CFBundleIconName</key><string>Hue</string>
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <key>LSApplicationCategoryType</key><string>public.app-category.education</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSPrincipalClass</key><string>NSApplication</string>
-    <key>NSCameraUsageDescription</key><string>Girafon uses your camera to display your documents and save captures to your Desktop.</string>
-    <key>NSDesktopFolderUsageDescription</key><string>Girafon saves your PNG captures directly to your Desktop.</string>
-    <key>NSHumanReadableCopyright</key><string>Girafon — Document Viewer</string>
+    <key>NSCameraUsageDescription</key><string>Hue uses your camera to display your documents and save captures to your Desktop.</string>
+    <key>NSDesktopFolderUsageDescription</key><string>Hue saves your PNG captures directly to your Desktop.</string>
+    <key>NSHumanReadableCopyright</key><string>Hue — Document Viewer</string>
 </dict>
 </plist>

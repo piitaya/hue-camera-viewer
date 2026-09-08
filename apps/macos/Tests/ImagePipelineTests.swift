@@ -102,7 +102,7 @@ private struct ImagePipelineTests {
         let roundTrip = try JSONDecoder().decode(ImageOrientation.self, from: JSONEncoder().encode(ImageOrientation(quarterTurns: 3)))
         try expect(roundTrip == ImageOrientation(quarterTurns: 3), "Orientation did not survive encoding")
 
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("girafon-image-tests-\(UUID().uuidString)")
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("hue-image-tests-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: folder) }
         let oriented = try processor.render(source, orientation: ImageOrientation(quarterTurns: 1))

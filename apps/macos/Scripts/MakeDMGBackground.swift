@@ -34,8 +34,8 @@ func text(_ string: String, top: CGFloat, size: CGFloat, weight: NSFont.Weight, 
     ])
 }
 
-text("Install Girafon", top: 44, size: 30, weight: .semibold, color: ink)
-text("Drag Girafon to Applications.", top: 89, size: 15, weight: .regular, color: secondary)
+text("Install Hue Camera Viewer", top: 44, size: 30, weight: .semibold, color: ink)
+text("Drag Hue to Applications.", top: 89, size: 15, weight: .regular, color: secondary)
 
 for center in [CGFloat(180), CGFloat(480)] {
     NSColor(srgbRed: 245 / 255, green: 182 / 255, blue: 49 / 255, alpha: 0.12).setFill()
@@ -56,7 +56,7 @@ arrow.line(to: CGPoint(x: 357, y: 224))
 arrow.line(to: CGPoint(x: 345, y: 236))
 arrow.stroke()
 
-text("Then open Girafon from Applications.", top: 366, size: 12,
+text("Then open Hue from Applications.", top: 366, size: 12,
      weight: .regular, color: secondary)
 NSGraphicsContext.restoreGraphicsState()
 

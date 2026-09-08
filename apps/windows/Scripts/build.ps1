@@ -4,10 +4,10 @@ param(
     [string]$OutputDirectory
 )
 $ErrorActionPreference = 'Stop'
-$project = Join-Path $PSScriptRoot '../Girafon.Windows/Girafon.Windows.csproj'
+$project = Join-Path $PSScriptRoot '../Hue.Windows/Hue.Windows.csproj'
 if (-not $OutputDirectory) { $OutputDirectory = Join-Path $PSScriptRoot "../build/$Runtime" }
 $platform = if ($Runtime -eq 'win-arm64') { 'ARM64' } else { 'x64' }
 dotnet publish $project --configuration $Configuration --runtime $Runtime --self-contained true `
     -p:Platform=$platform -p:WindowsAppSDKSelfContained=true --output $OutputDirectory
 if ($LASTEXITCODE -ne 0) { throw "Windows build failed with exit code $LASTEXITCODE." }
-Write-Host "Built Girafon: $OutputDirectory"
+Write-Host "Built Hue: $OutputDirectory"

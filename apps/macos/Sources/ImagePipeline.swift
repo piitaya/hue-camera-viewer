@@ -101,7 +101,7 @@ final class ImageProcessor {
         }
 
         // The temporary file shares the destination's filesystem, so rename is atomic.
-        let temporaryURL = directory.appendingPathComponent(".girafon-\(UUID().uuidString).tmp")
+        let temporaryURL = directory.appendingPathComponent(".hue-\(UUID().uuidString).tmp")
         try (data as Data).write(to: temporaryURL, options: .withoutOverwriting)
         defer { try? FileManager.default.removeItem(at: temporaryURL) }
 
