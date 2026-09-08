@@ -27,9 +27,7 @@ jobs:
       - name: Read the version from the release tag
         run: bash .github/scripts/release-version.sh "${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
       - name: Stamp the version into the app
-        run: |
-          plutil -replace CFBundleShortVersionString -string "$APP_VERSION" apps/macos/Resources/Info.plist
-          plutil -replace CFBundleVersion -string "$APP_VERSION" apps/macos/Resources/Info.plist
+        run: bash .github/scripts/set-version.sh "$APP_VERSION"
       - name: Import the Developer ID certificate
         env:
           APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
@@ -107,12 +105,8 @@ jobs:
         shell: bash
         run: bash .github/scripts/release-version.sh "${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
       - name: Stamp the version into the app
-        shell: pwsh
-        run: |
-          $path = 'apps/windows/Hue.Windows/Hue.Windows.csproj'
-          [xml]$project = Get-Content -LiteralPath $path -Raw
-          $project.SelectSingleNode('/Project/PropertyGroup/Version').InnerText = $env:APP_VERSION
-          $project.Save((Resolve-Path -LiteralPath $path).Path)
+        shell: bash
+        run: bash .github/scripts/set-version.sh "$APP_VERSION"
       - name: Test core logic
         run: dotnet test apps/windows/Hue.Core.Tests --configuration Release
       - name: Build self-contained x64 app
