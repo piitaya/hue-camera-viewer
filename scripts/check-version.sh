@@ -7,11 +7,11 @@ plist_version="$(sed -nE 's|.*<key>CFBundleShortVersionString</key><string>([^<]
 csproj_version="$(sed -nE 's|.*<Version>([^<]*)</Version>.*|\1|p' "$root/apps/windows/Hue.Windows/Hue.Windows.csproj")"
 status=0
 if [[ "$plist_version" != "$expected" ]]; then
-  printf 'Info.plist declares %s, the release tag says %s. Run .github/scripts/set-version.sh %s and commit before tagging.\n' "$plist_version" "$expected" "$expected" >&2
+  printf 'Info.plist declares %s, the release tag says %s. Run scripts/set-version.sh %s and commit before tagging.\n' "$plist_version" "$expected" "$expected" >&2
   status=1
 fi
 if [[ "$csproj_version" != "$expected" ]]; then
-  printf 'Hue.Windows.csproj declares %s, the release tag says %s. Run .github/scripts/set-version.sh %s and commit before tagging.\n' "$csproj_version" "$expected" "$expected" >&2
+  printf 'Hue.Windows.csproj declares %s, the release tag says %s. Run scripts/set-version.sh %s and commit before tagging.\n' "$csproj_version" "$expected" "$expected" >&2
   status=1
 fi
 exit "$status"

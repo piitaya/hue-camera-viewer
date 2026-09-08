@@ -25,9 +25,9 @@ jobs:
           sudo xcode-select --switch "$xcode/Contents/Developer"
           xcodebuild -version
       - name: Read the version from the release tag
-        run: bash .github/scripts/release-version.sh "${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
+        run: bash scripts/release-version.sh "${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
       - name: Check that the committed version matches the tag
-        run: bash .github/scripts/check-version.sh "$APP_VERSION"
+        run: bash scripts/check-version.sh "$APP_VERSION"
       - name: Import the Developer ID certificate
         env:
           APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
@@ -103,10 +103,10 @@ jobs:
           dotnet-version: '8.0.x'
       - name: Read the version from the release tag
         shell: bash
-        run: bash .github/scripts/release-version.sh "${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
+        run: bash scripts/release-version.sh "${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
       - name: Check that the committed version matches the tag
         shell: bash
-        run: bash .github/scripts/check-version.sh "$APP_VERSION"
+        run: bash scripts/check-version.sh "$APP_VERSION"
       - name: Test core logic
         run: dotnet test apps/windows/Hue.Core.Tests --configuration Release
       - name: Build self-contained x64 app

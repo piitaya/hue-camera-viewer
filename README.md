@@ -57,7 +57,7 @@ changes. Manual runs build both apps.
 
 ## Releases
 
-Bump the version with `bash .github/scripts/set-version.sh 1.2.0`, commit, then publish a GitHub
+Bump the version with `bash scripts/set-version.sh 1.2.0`, commit, then publish a GitHub
 release whose tag looks like `v1.2.0` (or `v1.2.0-beta.1`). The
 [release workflow](.github/workflows/release.yml) checks that both apps declare the tag's
 version, builds them, and attaches `Hue-Camera-Viewer-macOS.dmg` (signed and notarized) and
