@@ -59,4 +59,8 @@
 "Zoom also follows the scroll wheel or a pinch on the trackpad." = "Le zoom suit aussi la molette de la souris ou le pincement sur le trackpad.";
 "Done" = "OK";
 "Hide or Show Controls" = "Masquer ou afficher les commandes";
+"Freeze Image" = "Figer l’image";
+"Resume Live Image" = "Reprendre le direct";
+"Freeze or Resume Image" = "Figer ou reprendre l’image";
+"Image frozen" = "Image figée";
 "A simple viewer for your documents.\nCamera • Rotation • Zoom • Capture to Desktop" = "Un visualiseur simple pour vos documents.\nCaméra • Rotation • Zoom • Capture sur le Bureau";

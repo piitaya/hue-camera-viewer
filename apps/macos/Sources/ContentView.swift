@@ -40,6 +40,15 @@ struct ContentView: View {
                 if model.isZoomed {
                     zoomPill
                         .padding(14)
+                        .padding(.top, topPillInset)
+                        .transition(.opacity)
+                }
+            }
+            .overlay(alignment: .topLeading) {
+                if model.isFrozen {
+                    frozenPill
+                        .padding(14)
+                        .padding(.top, topPillInset)
                         .transition(.opacity)
                 }
             }
@@ -79,6 +88,7 @@ struct ContentView: View {
         .background(stageColor)
         .tint(dockAccent)
         .animation(.easeOut(duration: 0.18), value: model.isZoomed)
+        .animation(.easeOut(duration: 0.18), value: model.isFrozen)
         .onAppear { wheelZoom.install(handleWheel) }
         .onDisappear { wheelZoom.remove() }
         .sheet(isPresented: $model.isShowingShortcuts) {
@@ -140,6 +150,33 @@ struct ContentView: View {
         let limitY = max(0, (imageHeight * scale - size.height) / 2)
         return CGSize(width: min(max(offset.width, -limitX), limitX),
                       height: min(max(offset.height, -limitY), limitY))
+    }
+
+    /// The pills step below the dock when it sits on the top edge.
+    private var topPillInset: CGFloat {
+        model.dockEdge == .top && model.isToolbarVisible ? 72 : 0
+    }
+
+    private var frozenPill: some View {
+        Button(action: model.toggleFreeze) {
+            HStack(spacing: 6) {
+                Text("Image frozen")
+                    .font(.system(size: 12, weight: .medium))
+                Image(systemName: "play.fill")
+                    .font(.system(size: 9, weight: .bold))
+                    .frame(width: 18, height: 18)
+                    .background(.primary.opacity(0.09), in: Circle())
+            }
+            .foregroundStyle(.primary)
+            .padding(.leading, 12)
+            .padding(.trailing, 6)
+            .padding(.vertical, 6)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(Capsule().strokeBorder(.primary.opacity(0.10)))
+        }
+        .buttonStyle(.plain)
+        .help("Resume Live Image")
+        .accessibilityLabel("Resume Live Image")
     }
 
     private var zoomPill: some View {
@@ -218,10 +255,10 @@ struct ContentView: View {
         .coordinateSpace(name: "cameraStage")
     }
 
-    /// Grip 26, five 42-point buttons, one divider (11), hide button 30,
-    /// seven 4-point gaps and 10-point end padding.
+    /// Grip 26, six 42-point buttons, one divider (11), hide button 30,
+    /// eight 4-point gaps and 10-point end padding.
     private func dockSize(for edge: DockEdge) -> CGSize {
-        edge.isVertical ? CGSize(width: 58, height: 325) : CGSize(width: 325, height: 58)
+        edge.isVertical ? CGSize(width: 58, height: 371) : CGSize(width: 371, height: 58)
     }
 
     private func dock(for edge: DockEdge, in size: CGSize) -> some View {
@@ -235,6 +272,10 @@ struct ContentView: View {
             zoomButton(for: edge)
             dockDivider(for: edge)
             captureButton
+            DockButton(model.isFrozen ? "Resume Live Image" : "Freeze Image", icon: model.isFrozen ? .play : .pause,
+                       isActive: model.isFrozen, isEnabled: model.canFreeze) {
+                model.toggleFreeze()
+            }
             DockButton("Hide Controls", icon: chevron(for: edge, inward: false), size: 30, iconSize: 15) {
                 model.toggleToolbar()
             }
@@ -532,6 +573,7 @@ private struct ShortcutsView: View {
         ("Zoom In", "⌘ +"),
         ("Zoom Out", "⌘ −"),
         ("Zoom to 100 %", "⌘ 0"),
+        ("Freeze or Resume Image", "⌘ F"),
         ("Hide or Show Controls", "⌥ ⌘ T"),
     ]
 
@@ -662,6 +704,8 @@ private struct CameraImageView: View {
 private enum DockIcon: String {
     case source = "DockSource"
     case zoom = "DockZoom"
+    case pause = "DockPause"
+    case play = "DockPlay"
     case capture = "DockCapture"
     case rotateRight = "DockRotateRight"
     case rotateLeft = "DockRotateLeft"
@@ -692,28 +736,32 @@ private struct DockButton: View {
     var size: CGFloat = 42
     var iconSize: CGFloat = 21
     var isActive = false
+    var isEnabled = true
     let action: () -> Void
     @State private var hovering = false
 
     init(_ title: LocalizedStringKey, icon: DockIcon,
-         size: CGFloat = 42, iconSize: CGFloat = 21, isActive: Bool = false, action: @escaping () -> Void) {
+         size: CGFloat = 42, iconSize: CGFloat = 21, isActive: Bool = false, isEnabled: Bool = true,
+         action: @escaping () -> Void) {
         self.title = title
         self.icon = icon
         self.size = size
         self.iconSize = iconSize
         self.isActive = isActive
+        self.isEnabled = isEnabled
         self.action = action
     }
 
     var body: some View {
         Button(action: action) {
             DockGlyph(icon: icon, size: iconSize)
-                .foregroundStyle(.primary)
+                .foregroundStyle(isEnabled ? Color.primary : Color.secondary)
                 .frame(width: size, height: size)
-                .background(.primary.opacity(isActive ? 0.14 : hovering ? 0.08 : 0), in: Circle())
+                .background(.primary.opacity(isActive ? 0.14 : hovering && isEnabled ? 0.08 : 0), in: Circle())
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
+        .disabled(!isEnabled)
         .onHover { hovering = $0 }
         .help(Text(title))
         .accessibilityLabel(Text(title))

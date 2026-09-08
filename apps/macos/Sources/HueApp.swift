@@ -38,6 +38,10 @@ struct HueApp: App {
                 Button("Zoom to 100 %") { model.resetZoom() }
                     .keyboardShortcut("0", modifiers: .command)
                 Divider()
+                Button(model.isFrozen ? NSLocalizedString("Resume Live Image", comment: "Image menu while the preview is frozen") : NSLocalizedString("Freeze Image", comment: "Image menu while the preview is live")) { model.toggleFreeze() }
+                    .keyboardShortcut("f", modifiers: .command)
+                    .disabled(!model.canFreeze)
+                Divider()
                 Button(model.isToolbarVisible ? NSLocalizedString("Hide Controls", comment: "Image menu when controls are visible") : NSLocalizedString("Show Controls", comment: "Image menu when controls are hidden")) { model.toggleToolbar() }
                     .keyboardShortcut("t", modifiers: [.command, .option])
             }

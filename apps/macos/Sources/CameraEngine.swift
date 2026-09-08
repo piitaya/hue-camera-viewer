@@ -27,6 +27,7 @@ final class CameraEngine: NSObject, ObservableObject {
     let frames = CameraFrames()
     var image: CGImage? { frames.image }
     @Published private(set) var isTransforming = false
+    @Published private(set) var isFrozen = false
     @Published private(set) var state: CameraState = .idle
     @Published private(set) var resolution = ""
 
@@ -55,6 +56,7 @@ final class CameraEngine: NSObject, ObservableObject {
     private var revision = 0
     private var orientation = ImageOrientation()
     private var acceptsFrames = false
+    private var frozen = false
     private var activeOutput: ObjectIdentifier?
     private var latestRawImage: CIImage?
     private var nextFrameTime = 0.0
@@ -151,6 +153,18 @@ final class CameraEngine: NSObject, ObservableObject {
         resumeSelectedCamera()
     }
 
+    /// A frozen preview keeps its last frame; the session keeps running so
+    /// resuming is immediate, and rotation still re-renders the held frame.
+    func setFrozen(_ newValue: Bool) {
+        precondition(Thread.isMainThread)
+        guard newValue != isFrozen else { return }
+        guard !newValue || (state == .running && frames.image != nil) else { return }
+        lock.lock()
+        frozen = newValue
+        lock.unlock()
+        isFrozen = newValue
+    }
+
     func setOrientation(_ newOrientation: ImageOrientation) {
         precondition(Thread.isMainThread)
         orientationRevision += 1
@@ -240,6 +254,7 @@ final class CameraEngine: NSObject, ObservableObject {
         lock.lock()
         epoch = cameraEpoch
         acceptsFrames = false
+        frozen = false
         activeOutput = nil
         latestRawImage = nil
         pendingFrame = nil
@@ -247,6 +262,7 @@ final class CameraEngine: NSObject, ObservableObject {
         lock.unlock()
         frames.image = nil
         isTransforming = false
+        if isFrozen { isFrozen = false }
         resolution = ""
     }
 
@@ -433,7 +449,7 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate {
         let timestamp = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
         let now = timestamp.isFinite ? timestamp : ProcessInfo.processInfo.systemUptime
         lock.lock()
-        guard acceptsFrames, activeOutput == ObjectIdentifier(output) else {
+        guard acceptsFrames, !frozen, activeOutput == ObjectIdentifier(output) else {
             lock.unlock()
             return
         }

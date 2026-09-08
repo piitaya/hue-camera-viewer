@@ -109,6 +109,24 @@ private struct CaptureFlowTests {
         try expect(!model.isZoomed, "Zoom did not reset")
         try expect(model.camera.image.map(rgbaBytes) == rgbaBytes(currentPreview), "Zooming must not change the camera frame")
 
-        print("PASS: immediate rotation/capture queues one PNG, preserves native dimensions, matches the rotated pixels and preview, zooms the preview without touching the frame, and uses only an isolated demo directory.")
+        // Freezing holds the frame; rotation keeps re-orienting the held image.
+        try expect(!model.isFrozen && model.canFreeze, "Freeze must be available while streaming")
+        model.toggleFreeze()
+        try expect(model.isFrozen, "Freeze did not apply")
+        model.rotate(1)
+        try await waitUntil("The frozen frame was not re-oriented") { !model.camera.isTransforming }
+        guard let frozenImage = model.camera.image else {
+            throw TestFailure.assertion("The frozen frame is missing")
+        }
+        let expectedFrozen = try ImageProcessor().render(CIImage(cgImage: initialImage), orientation: ImageOrientation(quarterTurns: 2))
+        try expect(rgbaBytes(frozenImage) == rgbaBytes(expectedFrozen), "Rotation must apply to the frozen frame")
+        try expect(model.isFrozen, "Rotation must not end the freeze")
+        model.toggleFreeze()
+        try expect(!model.isFrozen, "Resume did not apply")
+        model.toggleFreeze()
+        model.camera.stop()
+        try expect(!model.isFrozen && !model.canFreeze, "Stopping the camera must end the freeze")
+
+        print("PASS: immediate rotation/capture queues one PNG, preserves native dimensions, matches the rotated pixels and preview, zooms the preview without touching the frame, freezes and rotates the held frame, and uses only an isolated demo directory.")
     }
 }
