@@ -26,8 +26,8 @@ jobs:
           xcodebuild -version
       - name: Read the version from the release tag
         run: bash .github/scripts/release-version.sh "${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
-      - name: Stamp the version into the app
-        run: bash .github/scripts/set-version.sh "$APP_VERSION"
+      - name: Check that the committed version matches the tag
+        run: bash .github/scripts/check-version.sh "$APP_VERSION"
       - name: Import the Developer ID certificate
         env:
           APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
@@ -104,9 +104,9 @@ jobs:
       - name: Read the version from the release tag
         shell: bash
         run: bash .github/scripts/release-version.sh "${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
-      - name: Stamp the version into the app
+      - name: Check that the committed version matches the tag
         shell: bash
-        run: bash .github/scripts/set-version.sh "$APP_VERSION"
+        run: bash .github/scripts/check-version.sh "$APP_VERSION"
       - name: Test core logic
         run: dotnet test apps/windows/Hue.Core.Tests --configuration Release
       - name: Build self-contained x64 app

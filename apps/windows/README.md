@@ -37,7 +37,7 @@ dotnet test Hue.Core.Tests
 
 GitHub Actions builds one installer for both architectures.
 Download it from the workflow's artifacts to try the preview on a PC; releases attach it as
-`Hue-Camera-Viewer-<version>-Windows.exe`, with the version taken from the release tag.
+`Hue-Camera-Viewer-<version>-Windows.exe`, named after the release tag.
 To package locally, build both runtimes and install Inno Setup 6.3+, then run:
 
 ```powershell
