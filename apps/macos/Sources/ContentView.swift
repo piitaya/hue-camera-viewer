@@ -162,7 +162,7 @@ struct ContentView: View {
             HStack(spacing: 6) {
                 Text("Image frozen")
                     .font(.system(size: 12, weight: .medium))
-                Image(systemName: "play.fill")
+                Image(systemName: "xmark")
                     .font(.system(size: 9, weight: .bold))
                     .frame(width: 18, height: 18)
                     .background(.primary.opacity(0.09), in: Circle())
@@ -272,7 +272,7 @@ struct ContentView: View {
             zoomButton(for: edge)
             dockDivider(for: edge)
             captureButton
-            DockButton(model.isFrozen ? "Resume Live Image" : "Freeze Image", icon: model.isFrozen ? .play : .pause,
+            DockButton(model.isFrozen ? "Resume Live Image" : "Freeze Image", icon: .snowflake,
                        isActive: model.isFrozen, isEnabled: model.canFreeze) {
                 model.toggleFreeze()
             }
@@ -704,8 +704,7 @@ private struct CameraImageView: View {
 private enum DockIcon: String {
     case source = "DockSource"
     case zoom = "DockZoom"
-    case pause = "DockPause"
-    case play = "DockPlay"
+    case snowflake = "DockSnowflake"
     case capture = "DockCapture"
     case rotateRight = "DockRotateRight"
     case rotateLeft = "DockRotateLeft"

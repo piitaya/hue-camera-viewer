@@ -94,8 +94,6 @@ internal sealed class MainWindow : Window
     private readonly Button _zoomButton;
     private readonly Button _capture;
     private readonly Button _freeze;
-    private readonly Viewbox _pauseGlyph;
-    private readonly Viewbox _playGlyph;
     private readonly Button _collapse;
     private readonly Button _expand;
     private readonly Rectangle _divider = new() { Width = 1, Height = 22, Margin = new Thickness(2, 0, 2, 0), Opacity = 0.16 };
@@ -223,7 +221,11 @@ internal sealed class MainWindow : Window
         {
             Text = Strings.Get("Image frozen"), FontSize = 12, VerticalAlignment = VerticalAlignment.Center
         });
-        freezePillContent.Children.Add(MakeGlyph(DockIcons.Play, 12));
+        freezePillContent.Children.Add(new TextBlock
+        {
+            Text = "×", FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Width = 18, Height = 18,
+            TextAlignment = TextAlignment.Center, VerticalAlignment = VerticalAlignment.Center
+        });
         _freezePill.Content = freezePillContent;
         _freezePill.Click += (_, _) => ToggleFreeze();
         ToolTipService.SetToolTip(_freezePill, Strings.Get("Resume live image"));
@@ -249,9 +251,7 @@ internal sealed class MainWindow : Window
         _zoomButton.Click += (_, _) => ShowZoomPanel();
         _capture = MakeButton("Capture image", MakeGlyph(DockIcons.Capture));
         _capture.Click += async (_, _) => await CaptureAsync();
-        _pauseGlyph = MakeGlyph(DockIcons.Pause);
-        _playGlyph = MakeGlyph(DockIcons.Play);
-        _freeze = MakeButton("Freeze image", _pauseGlyph);
+        _freeze = MakeButton("Freeze image", MakeGlyph(DockIcons.Snowflake));
         _freeze.Click += (_, _) => ToggleFreeze();
         _collapse = MakeButton("Hide controls", MakeGlyph(DockIcons.ChevronRight, 15, _chevronRotation));
         _collapse.Click += (_, _) => ToggleDock();
@@ -604,7 +604,6 @@ internal sealed class MainWindow : Window
         _rotateRight.IsEnabled = ready;
         _zoomButton.IsEnabled = ready;
         _freeze.IsEnabled = ready;
-        _freeze.Content = frozen ? _playGlyph : _pauseGlyph;
         _freeze.Background = frozen ? new SolidColorBrush(Colors.Gray) { Opacity = 0.25 } : new SolidColorBrush(Colors.Transparent);
         string freezeLabel = Strings.Get(frozen ? "Resume live image" : "Freeze image");
         ToolTipService.SetToolTip(_freeze, freezeLabel);
@@ -1042,12 +1041,12 @@ internal sealed class MainWindow : Window
         if (_zoomPill.Visibility != Visibility.Collapsed || _panX != 0) throw new InvalidOperationException("The zoom did not reset.");
 
         ToggleFreeze();
-        if (!_camera.IsFrozen || _freezePill.Visibility != Visibility.Visible || _freeze.Content != _playGlyph)
+        if (!_camera.IsFrozen || _freezePill.Visibility != Visibility.Visible)
             throw new InvalidOperationException("The freeze did not apply to the preview and its pill.");
         Rotate(1);
         if (_rotation.Angle != 180 || !_camera.IsFrozen) throw new InvalidOperationException("Rotation must keep working while frozen.");
         ToggleFreeze();
-        if (_camera.IsFrozen || _freezePill.Visibility != Visibility.Collapsed || _freeze.Content != _pauseGlyph)
+        if (_camera.IsFrozen || _freezePill.Visibility != Visibility.Collapsed)
             throw new InvalidOperationException("The freeze did not resume the live image.");
     }
 

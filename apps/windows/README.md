@@ -9,7 +9,7 @@ The installer automatically selects the native Intel/AMD or ARM version.
 Captures are saved as PNG files on your Desktop.
 The arrows rotate the image and the magnifier opens the zoom slider; the zoom also
 follows the mouse wheel or a touchpad pinch and only magnifies the preview.
-The pause button freezes the image while the camera keeps running; rotation, zoom and capture
+The snowflake button freezes the image while the camera keeps running; rotation, zoom and capture
 still apply to the held image, and the pill in the top-left corner resumes the live view.
 Shortcuts: Ctrl+S captures, Ctrl+← / Ctrl+→ rotate, Ctrl + / Ctrl − / Ctrl 0 zoom, Ctrl+F freezes, Ctrl+T hides the controls.
 You can uninstall Hue from Windows Settings → Apps.

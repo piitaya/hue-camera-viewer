@@ -16,12 +16,10 @@ internal static class DockIcons
     public const string Zoom =
         "M19 11 A8 8 0 1 0 3 11 A8 8 0 1 0 19 11 Z M21 21 L16.65 16.65 M11 8 V14 M8 11 H14";
 
-    public const string Pause =
-        "M15 3 H18 A1 1 0 0 1 19 4 V20 A1 1 0 0 1 18 21 H15 A1 1 0 0 1 14 20 V4 A1 1 0 0 1 15 3 Z " +
-        "M6 3 H9 A1 1 0 0 1 10 4 V20 A1 1 0 0 1 9 21 H6 A1 1 0 0 1 5 20 V4 A1 1 0 0 1 6 3 Z";
-
-    public const string Play =
-        "M5 5 a2 2 0 0 1 3.008 -1.728 l11.997 6.998 a2 2 0 0 1 .003 3.458 l-12 7 A2 2 0 0 1 5 19 z";
+    public const string Snowflake =
+        "M10 20 l-1.25 -2.5 L6 18 M10 4 L8.75 6.5 L6 6 M14 20 l1.25 -2.5 L18 18 M14 4 l1.25 2.5 L18 6 " +
+        "M17 21 l-3 -6 h-4 M17 3 l-3 6 l1.5 3 M2 12 h6.5 L10 9 M20 10 l-1.5 2 l1.5 2 M22 12 h-6.5 L14 15 " +
+        "M4 10 l1.5 2 L4 14 M7 21 l3 -6 l-1.5 -3 M7 3 l3 6 h4";
 
     public const string RotateLeft =
         "M3 12 a9 9 0 1 0 9 -9 a9.75 9.75 0 0 0 -6.74 2.74 L3 8 M3 3 V8 H8";
