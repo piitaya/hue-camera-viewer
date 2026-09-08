@@ -68,7 +68,7 @@ struct ContentView: View {
                 }
             }
             .overlay(alignment: .bottomLeading) {
-                if model.isDemo {
+                if model.showsDemoBadge {
                     Text("Demo")
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.white.opacity(0.42))
