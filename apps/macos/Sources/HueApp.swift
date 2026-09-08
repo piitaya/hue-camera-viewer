@@ -49,8 +49,8 @@ struct HueApp: App {
                 Button("About Hue") {
                     NSApp.orderFrontStandardAboutPanel(options: [
                         .applicationName: "Hue",
-                        .applicationVersion: "1.0",
-                        .version: "1",
+                        .applicationVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
+                        .version: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "",
                         .credits: NSAttributedString(string: NSLocalizedString("A simple viewer for your documents.\nCamera • Rotation • Zoom • Capture to Desktop", comment: "About panel description"))
                     ])
                 }

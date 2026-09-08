@@ -1,7 +1,8 @@
 param(
     [Parameter(Mandatory)][string]$X64AppDirectory,
     [Parameter(Mandatory)][string]$Arm64AppDirectory,
-    [string]$OutputDirectory
+    [string]$OutputDirectory,
+    [string]$OutputBaseName
 )
 $ErrorActionPreference = 'Stop'
 
@@ -47,17 +48,20 @@ if (-not (Test-Path -LiteralPath $compiler -PathType Leaf)) {
 [xml]$project = Get-Content -LiteralPath (Join-Path $PSScriptRoot '../Hue.Windows/Hue.Windows.csproj') -Raw
 $version = $project.SelectSingleNode('/Project/PropertyGroup/Version').InnerText
 if ($version -notmatch '^\d+\.\d+\.\d+(\.\d+)?$') { throw 'The app version must be a numeric release version.' }
+if (-not $OutputBaseName) { $OutputBaseName = "Hue-Camera-Viewer-$version-Windows" }
+if ($OutputBaseName -notmatch '^[A-Za-z0-9._-]+$') { throw 'The installer name may only contain letters, digits, dots, dashes and underscores.' }
 $iconPath = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../../../assets/Hue.ico')).Path
 $arguments = @(
     "/DX64AppDirectory=$x64AppPath"
     "/DArm64AppDirectory=$arm64AppPath"
     "/DOutputDirectory=$outputPath"
     "/DAppVersion=$version"
+    "/DOutputBaseName=$OutputBaseName"
     "/DSetupIconPath=$iconPath"
     (Join-Path $PSScriptRoot 'installer.iss')
 )
 & $compiler @arguments
 if ($LASTEXITCODE -ne 0) { throw "Installer packaging failed with exit code $LASTEXITCODE." }
-$installer = Join-Path $outputPath 'Hue-Setup.exe'
+$installer = Join-Path $outputPath "$OutputBaseName.exe"
 if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) { throw 'The installer was not created.' }
 Write-Host "Packaged Hue: $installer"
