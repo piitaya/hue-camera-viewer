@@ -14,6 +14,8 @@ Windows, in English and French.
 
 > Independent project, not affiliated with HUE. This app is compatible with HUE cameras.
 
+<img src="assets/screenshot.png" width="700" alt="Hue Camera Viewer showing a sheet of paper with wooden shapes, the toolbar at the bottom">
+
 ## Features
 
 - Live preview of the camera, full screen in the window, with the HUE camera picked automatically.

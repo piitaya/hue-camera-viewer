@@ -14,6 +14,8 @@ Applications natives pour macOS et Windows, en français et en anglais.
 
 > Projet indépendant, non affilié à HUE. Cette application est compatible avec les caméras HUE.
 
+<img src="assets/screenshot.png" width="700" alt="Hue Camera Viewer affichant une feuille avec des formes en bois, la barre d’outils en bas">
+
 ## Fonctionnalités
 
 - Aperçu en direct de la caméra, plein cadre dans la fenêtre, avec la caméra HUE choisie automatiquement.
