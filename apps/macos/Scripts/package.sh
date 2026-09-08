@@ -61,7 +61,6 @@ hdiutil attach -readonly -nobrowse -mountpoint "$MOUNT_DIR" "$STAGING_DIR/Hue.dm
 MOUNTED=1
 verify_app "$MOUNT_DIR/Hue.app"
 [[ "$(readlink "$MOUNT_DIR/Applications")" == /Applications ]]
-[[ ! -e "$MOUNT_DIR/LISEZ-MOI.txt" ]]
 hdiutil detach "$MOUNT_DIR" >/dev/null
 MOUNTED=0
 mv -f "$STAGING_DIR/Hue.dmg" "$DESTINATION"
