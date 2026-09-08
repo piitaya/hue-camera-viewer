@@ -51,6 +51,7 @@ Hue Camera Viewer is an independent project, not affiliated with HUE or the othe
 - `apps/macos`: Swift app and DMG packaging.
 - `apps/windows`: C# app, tests, and Windows packaging.
 - `assets`: shared app icons.
+- `scripts`: version bump and CI helpers.
 
 Pull requests and pushes to `main` build and test the affected apps, skipping documentation-only
 changes. Manual runs build both apps.

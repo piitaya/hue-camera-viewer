@@ -2,7 +2,7 @@
 # Fails when the committed app versions do not match the version given as argument.
 set -euo pipefail
 expected="${1:?A version such as 1.2.0 is required}"
-root="$(cd "$(dirname "$0")/../.." && pwd)"
+root="$(cd "$(dirname "$0")/.." && pwd)"
 plist_version="$(sed -nE 's|.*<key>CFBundleShortVersionString</key><string>([^<]*)</string>.*|\1|p' "$root/apps/macos/Resources/Info.plist")"
 csproj_version="$(sed -nE 's|.*<Version>([^<]*)</Version>.*|\1|p' "$root/apps/windows/Hue.Windows/Hue.Windows.csproj")"
 status=0

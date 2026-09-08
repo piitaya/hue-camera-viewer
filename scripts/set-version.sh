@@ -6,7 +6,7 @@ if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   printf 'The version must look like 1.2.0; got: %s\n' "$version" >&2
   exit 1
 fi
-root="$(cd "$(dirname "$0")/../.." && pwd)"
+root="$(cd "$(dirname "$0")/.." && pwd)"
 plist="$root/apps/macos/Resources/Info.plist"
 csproj="$root/apps/windows/Hue.Windows/Hue.Windows.csproj"
 sed -i.bak -E \
