@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hue Camera Viewer</title>
+  <meta name="description" content="A minimal viewer for HUE and USB document cameras, for macOS and Windows.">
+  <link rel="canonical" href="https://piitaya.github.io/hue-camera-viewer/">
+  <link rel="alternate" hreflang="en" href="https://piitaya.github.io/hue-camera-viewer/">
+  <link rel="alternate" hreflang="fr" href="https://piitaya.github.io/hue-camera-viewer/fr/">
+  <link rel="alternate" hreflang="x-default" href="https://piitaya.github.io/hue-camera-viewer/">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#f6f8ee" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#161a19" media="(prefers-color-scheme: dark)">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Hue Camera Viewer">
+  <meta property="og:title" content="Hue Camera Viewer">
+  <meta property="og:description" content="A minimal viewer for HUE and USB document cameras, for macOS and Windows.">
+  <meta property="og:url" content="https://piitaya.github.io/hue-camera-viewer/">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image" content="https://piitaya.github.io/hue-camera-viewer/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Hue Camera Viewer showing a sheet of paper with wooden shapes">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Hue Camera Viewer">
+  <meta name="twitter:description" content="A minimal viewer for HUE and USB document cameras, for macOS and Windows.">
+  <meta name="twitter:image" content="https://piitaya.github.io/hue-camera-viewer/og.png">
+  <link rel="stylesheet" href="style.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Hue Camera Viewer",
+    "description": "A minimal viewer for HUE and USB document cameras, for macOS and Windows.",
+    "url": "https://piitaya.github.io/hue-camera-viewer/",
+    "inLanguage": "en",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "macOS 13+, Windows 10+",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+    "license": "https://opensource.org/licenses/MIT",
+    "image": "https://piitaya.github.io/hue-camera-viewer/og.png",
+    "downloadUrl": "https://github.com/piitaya/hue-camera-viewer/releases/latest"
+  }
+  </script>
+</head>
+<body>
+<main>
+  <header>
+    <nav class="lang" aria-label="Language">
+      <a href="./" lang="en" hreflang="en" aria-current="page">EN</a>
+      <a href="fr/" lang="fr" hreflang="fr">FR</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <img class="icon" src="hue.png" alt="">
+    <h1>Hue Camera Viewer</h1>
+    <p class="tagline">A minimal viewer for HUE and USB document cameras. Plug in the camera, show the page, save a picture.</p>
+    <span class="version" id="version" data-prefix="Version " hidden></span>
+  </div>
+
+  <div class="downloads">
+    <a class="button" href="https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-macOS.dmg">
+      Download for Mac
+      <small>macOS 13+ · Intel &amp; Apple Silicon</small>
+    </a>
+    <a class="button" href="https://github.com/piitaya/hue-camera-viewer/releases/latest/download/Hue-Camera-Viewer-Windows.exe">
+      Download for Windows
+      <small>Windows 10 (2004)+ · x64 &amp; ARM64</small>
+    </a>
+  </div>
+  <p class="all"><a href="https://github.com/piitaya/hue-camera-viewer/releases">All releases</a></p>
+
+  <img class="screenshot" src="screenshot.png" width="1400" height="900" alt="Hue Camera Viewer showing a sheet of paper with wooden shapes, the toolbar at the bottom">
+
+  <section>
+    <h2>Install</h2>
+    <div class="install">
+      <div class="card">
+        <h3>On a Mac</h3>
+        <p>Open the downloaded file and drag Hue to Applications. On first launch, allow camera access.</p>
+      </div>
+      <div class="card">
+        <h3>On Windows</h3>
+        <p>Run the installer, then open Hue from the Start menu. If SmartScreen shows a warning, choose “More info”, then “Run anyway”.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What it does</h2>
+    <ul>
+      <li>Live preview of the camera, with the HUE camera picked automatically.</li>
+      <li>Rotation by quarter turns, remembered between launches.</li>
+      <li>Zoom from 100 to 400 % with a slider, the scroll wheel or a pinch.</li>
+      <li>Freeze the image while you turn a page.</li>
+      <li>One-click PNG captures at full resolution, saved to the Desktop.</li>
+      <li>A toolbar you can move to any edge or hide, with keyboard shortcuts for everything.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>Independent project, not affiliated with HUE. Free, <a href="https://github.com/piitaya/hue-camera-viewer">source on GitHub</a>, MIT license.</p>
+  </footer>
+</main>
+<script src="version.js"></script>
+</body>
+</html>
