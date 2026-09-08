@@ -1,13 +1,15 @@
-# Girafon for macOS
+# Hue Camera Viewer for macOS
 
-A minimal macOS app for document cameras: live preview, rotation and zoom,
+> Independent project, not affiliated with HUE. This app is compatible with HUE cameras.
+
+A minimal macOS app for HUE and USB document cameras: live preview, rotation and zoom,
 and PNG captures saved to the Desktop, with a movable, collapsible dock.
 
 **macOS 13+ · Intel and Apple Silicon · English and French**
 
 ## Install
 
-Open the DMG, drag Girafon to Applications, and launch it.
+Open the DMG, drag Hue to Applications, and launch it.
 Allow camera access when prompted.
 
 See the [camera compatibility list](../../README.md#cameras).
@@ -18,11 +20,11 @@ Requires Xcode with the macOS 26 SDK or later. Run these commands from `apps/mac
 
 ```sh
 bash Scripts/build.sh
-open build/Girafon.app
+open build/Hue.app
 ```
 
 Run tests with `bash Scripts/test.sh`.
-Use `open -na build/Girafon.app --args --demo` to develop without a camera.
+Use `open -na build/Hue.app --args --demo` to develop without a camera.
 
 ## Controls
 
@@ -37,7 +39,7 @@ follows the scroll wheel or a trackpad pinch and only magnifies the preview.
 | Zoom in / out / 100 % | ⌘+ / ⌘− / ⌘0 |
 | Hide or show controls | ⌥⌘T |
 
-After editing `assets/girafon.svg` or the Icon Composer settings, regenerate the shared
+After editing `assets/hue.svg` or the Icon Composer settings, regenerate the shared
 PNG and Windows ICO with `bash Scripts/export-icon.sh`.
 
 ## Create the DMG

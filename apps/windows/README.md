@@ -1,14 +1,16 @@
-# Girafon for Windows
+# Hue Camera Viewer for Windows
+
+> Independent project, not affiliated with HUE. This app is compatible with HUE cameras.
 
 A minimal camera viewer for Windows 10 (2004)+ and Windows 11, in English and French.
 
-Open `Girafon-Setup.exe`, then launch Girafon from the Start menu and choose your camera.
+Open `Hue-Setup.exe`, then launch Hue from the Start menu and choose your camera.
 The installer automatically selects the native Intel/AMD or ARM version.
 Captures are saved as PNG files on your Desktop.
 The arrows rotate the image and the magnifier opens the zoom slider; the zoom also
 follows the mouse wheel or a touchpad pinch and only magnifies the preview.
 Shortcuts: Ctrl+S captures, Ctrl+← / Ctrl+→ rotate, Ctrl + / Ctrl − / Ctrl 0 zoom, Ctrl+T hides the controls.
-You can uninstall Girafon from Windows Settings → Apps.
+You can uninstall Hue from Windows Settings → Apps.
 
 See the [camera compatibility list](../../README.md#cameras).
 
@@ -19,7 +21,7 @@ and the Windows App SDK build tools installed.
 
 ```powershell
 ./Scripts/build.ps1
-./build/win-x64/Girafon.exe --demo
+./build/win-x64/Hue.exe --demo
 ```
 
 Use `-Runtime win-arm64` to build for ARM64.
@@ -28,7 +30,7 @@ The output folder includes the app's runtime dependencies.
 Run the core tests on any platform with:
 
 ```sh
-dotnet test Girafon.Core.Tests
+dotnet test Hue.Core.Tests
 ```
 
 GitHub Actions builds one installer for both architectures.

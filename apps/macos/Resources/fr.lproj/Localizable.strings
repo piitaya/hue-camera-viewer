@@ -29,12 +29,12 @@
 "Connect your camera to a USB port on your Mac." = "Connectez votre caméra à un port USB de votre Mac.";
 "Allow access when macOS asks to show the preview." = "Acceptez la demande de macOS pour afficher l’aperçu.";
 "Preparing the preview." = "Préparation de l’aperçu.";
-"Enable Girafon in System Settings → Privacy & Security → Camera." = "Activez Girafon dans Réglages Système → Confidentialité et sécurité → Caméra.";
+"Enable Hue in System Settings → Privacy & Security → Camera." = "Activez Hue dans Réglages Système → Confidentialité et sécurité → Caméra.";
 "Camera Preview" = "Aperçu de la caméra";
 "Show Last Capture" = "Afficher la dernière capture";
 "Image" = "Image";
 "Reset Orientation" = "Réinitialiser l’orientation";
-"About Girafon" = "À propos de Girafon";
+"About Hue" = "À propos de Hue";
 "The camera could not start. Unplug it, then plug it back in." = "La caméra n’a pas pu démarrer. Débranchez-la puis rebranchez-la.";
 "The camera is temporarily unavailable. Close other apps that are using it." = "La caméra est momentanément indisponible. Fermez les autres applications qui l’utilisent.";
 "The camera is not sending any images. Check the USB cable and close other apps that are using it." = "La caméra n’envoie aucune image. Vérifiez le câble USB et fermez les applications qui l’utilisent.";
@@ -46,7 +46,7 @@
 "The Desktop folder could not be found." = "Le dossier Bureau est introuvable.";
 "Demo capture saved" = "Capture de démonstration enregistrée";
 "Capture saved to the Desktop" = "Capture enregistrée sur le Bureau";
-"The capture could not be saved.\n\nCheck Desktop access in System Settings → Privacy & Security → Files & Folders → Girafon.\n\n%@" = "La capture n’a pas pu être enregistrée.\n\nVérifiez l’accès au Bureau dans Réglages Système → Confidentialité et sécurité → Fichiers et dossiers → Girafon.\n\n%@";
+"The capture could not be saved.\n\nCheck Desktop access in System Settings → Privacy & Security → Files & Folders → Hue.\n\n%@" = "La capture n’a pas pu être enregistrée.\n\nVérifiez l’accès au Bureau dans Réglages Système → Confidentialité et sécurité → Fichiers et dossiers → Hue.\n\n%@";
 "The camera image has invalid dimensions." = "L’image de la caméra a des dimensions invalides.";
 "The camera image could not be prepared." = "Impossible de préparer l’image de la caméra.";
 "The PNG capture could not be created." = "Impossible de créer la capture PNG.";

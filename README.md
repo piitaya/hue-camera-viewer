@@ -1,11 +1,13 @@
-# Girafon
+# Hue Camera Viewer
 
-<img src="assets/girafon.png" width="96" alt="Girafon app icon">
+<img src="assets/hue.png" width="96" alt="Hue Camera Viewer app icon">
+
+> Independent project, not affiliated with HUE. This app is compatible with HUE cameras.
 
 **English** | [Français](README.fr.md)
 
-A minimal document camera viewer: live preview, rotation and zoom, and PNG captures
-saved to your Desktop, with a movable, collapsible toolbar.
+A minimal viewer for HUE and USB document cameras: live preview, rotation and zoom,
+and PNG captures saved to your Desktop, with a movable, collapsible toolbar.
 
 **English and French · Native apps for macOS and Windows**
 
@@ -16,18 +18,19 @@ saved to your Desktop, with a movable, collapsible toolbar.
 
 ## Install
 
-Download the Girafon preview installers from a successful [GitHub Actions build](https://github.com/piitaya/girafon/actions/workflows/build.yml).
-On macOS, open the DMG and drag Girafon to Applications.
-On Windows, run `Girafon-Setup.exe`, then open Girafon from the Start menu.
+**[Download for macOS](https://github.com/piitaya/hue-camera-viewer/releases/latest)** · **[Download for Windows](https://github.com/piitaya/hue-camera-viewer/releases/latest)**
+
+On macOS, open the DMG and drag Hue to Applications.
+On Windows, run `Hue-Setup.exe`, then open Hue from the Start menu.
 Connect your camera and allow camera access when prompted.
 
-Preview builds are for testing: the macOS preview is not notarized, and the unsigned
-Windows installer may trigger a Microsoft SmartScreen warning.
-[Published releases](https://github.com/piitaya/girafon/releases) remain available separately.
+The macOS app is not notarized, and the unsigned Windows installer may trigger a
+Microsoft SmartScreen warning. Preview builds of every change are also available for
+three days in the [GitHub Actions](https://github.com/piitaya/hue-camera-viewer/actions/workflows/build.yml) artifacts.
 
 ## Cameras
 
-Girafon uses cameras exposed by the operating system.
+Hue Camera Viewer uses cameras exposed by the operating system.
 
 | Camera family | Connection |
 | --- | --- |
@@ -38,7 +41,7 @@ Girafon uses cameras exposed by the operating system.
 
 This covers camera families, not an exhaustive list of tested models. Individual device
 compatibility can vary; older cameras requiring proprietary drivers are not covered.
-Girafon is independent and is not affiliated with the camera manufacturers listed here.
+Hue Camera Viewer is an independent project, not affiliated with HUE or the other camera manufacturers listed here.
 
 ## Repository
 
@@ -47,6 +50,6 @@ Girafon is independent and is not affiliated with the camera manufacturers liste
 - `assets`: shared app icons.
 
 Pull requests and pushes to `main` build and test the affected apps, skipping documentation-only
-changes. Manual runs build both apps. Preview installers are available for three days.
+changes. Manual runs build both apps.
 
 Licensed under the [MIT License](LICENSE).

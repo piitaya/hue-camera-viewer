@@ -1,11 +1,14 @@
-# Girafon
+# Hue Camera Viewer
 
-<img src="assets/girafon.png" width="96" alt="Icône de Girafon">
+<img src="assets/hue.png" width="96" alt="Icône de Hue Camera Viewer">
+
+> Projet indépendant, non affilié à HUE. Cette application est compatible avec les caméras HUE.
 
 [English](README.md) | **Français**
 
-Un visualiseur de documents simple : affichage en direct, rotation et zoom, et captures
-PNG enregistrées sur le Bureau, avec une barre d’outils déplaçable et repliable.
+Une application simple pour les caméras de documents HUE et USB : affichage en direct,
+rotation et zoom, et captures PNG enregistrées sur le Bureau, avec une barre d’outils
+déplaçable et repliable.
 
 **Français et anglais · Applications natives pour macOS et Windows**
 
@@ -16,18 +19,19 @@ PNG enregistrées sur le Bureau, avec une barre d’outils déplaçable et repli
 
 ## Installation
 
-Téléchargez les installateurs de test Girafon depuis une [compilation GitHub Actions réussie](https://github.com/piitaya/girafon/actions/workflows/build.yml).
-Sur macOS, ouvrez le DMG et glissez Girafon dans le dossier Applications.
-Sur Windows, lancez `Girafon-Setup.exe`, puis ouvrez Girafon depuis le menu Démarrer.
+**[Télécharger pour macOS](https://github.com/piitaya/hue-camera-viewer/releases/latest)** · **[Télécharger pour Windows](https://github.com/piitaya/hue-camera-viewer/releases/latest)**
+
+Sur macOS, ouvrez le DMG et glissez Hue dans le dossier Applications.
+Sur Windows, lancez `Hue-Setup.exe`, puis ouvrez Hue depuis le menu Démarrer.
 Branchez votre caméra et autorisez son accès lorsque l’application le demande.
 
-Ces versions servent aux tests : la version macOS n’est pas notarisée et l’installateur
-Windows non signé peut afficher un avertissement Microsoft SmartScreen.
-Les [versions publiées](https://github.com/piitaya/girafon/releases) restent disponibles séparément.
+L’application macOS n’est pas notarisée et l’installateur Windows non signé peut afficher
+un avertissement Microsoft SmartScreen. Des versions de test de chaque modification restent
+disponibles trois jours dans les artefacts [GitHub Actions](https://github.com/piitaya/hue-camera-viewer/actions/workflows/build.yml).
 
 ## Caméras
 
-Girafon utilise les caméras accessibles depuis le système d’exploitation.
+Hue Camera Viewer utilise les caméras accessibles depuis le système d’exploitation.
 
 | Famille de caméras | Connexion |
 | --- | --- |
@@ -38,7 +42,7 @@ Girafon utilise les caméras accessibles depuis le système d’exploitation.
 
 Cette liste couvre des familles de caméras, pas tous les modèles testés. La compatibilité
 peut varier selon l’appareil ; les anciens modèles nécessitant un pilote propriétaire ne sont pas couverts.
-Girafon est un projet indépendant, non affilié aux fabricants de caméras cités ici.
+Hue Camera Viewer est un projet indépendant, non affilié à HUE ni aux autres fabricants de caméras cités ici.
 
 Pour le développement, consultez le [README en anglais](README.md#repository).
 

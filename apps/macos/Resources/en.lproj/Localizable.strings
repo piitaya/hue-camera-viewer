@@ -29,12 +29,12 @@
 "Connect your camera to a USB port on your Mac." = "Connect your camera to a USB port on your Mac.";
 "Allow access when macOS asks to show the preview." = "Allow access when macOS asks to show the preview.";
 "Preparing the preview." = "Preparing the preview.";
-"Enable Girafon in System Settings → Privacy & Security → Camera." = "Enable Girafon in System Settings → Privacy & Security → Camera.";
+"Enable Hue in System Settings → Privacy & Security → Camera." = "Enable Hue in System Settings → Privacy & Security → Camera.";
 "Camera Preview" = "Camera Preview";
 "Show Last Capture" = "Show Last Capture";
 "Image" = "Image";
 "Reset Orientation" = "Reset Orientation";
-"About Girafon" = "About Girafon";
+"About Hue" = "About Hue";
 "The camera could not start. Unplug it, then plug it back in." = "The camera could not start. Unplug it, then plug it back in.";
 "The camera is temporarily unavailable. Close other apps that are using it." = "The camera is temporarily unavailable. Close other apps that are using it.";
 "The camera is not sending any images. Check the USB cable and close other apps that are using it." = "The camera is not sending any images. Check the USB cable and close other apps that are using it.";
@@ -46,7 +46,7 @@
 "The Desktop folder could not be found." = "The Desktop folder could not be found.";
 "Demo capture saved" = "Demo capture saved";
 "Capture saved to the Desktop" = "Capture saved to the Desktop";
-"The capture could not be saved.\n\nCheck Desktop access in System Settings → Privacy & Security → Files & Folders → Girafon.\n\n%@" = "The capture could not be saved.\n\nCheck Desktop access in System Settings → Privacy & Security → Files & Folders → Girafon.\n\n%@";
+"The capture could not be saved.\n\nCheck Desktop access in System Settings → Privacy & Security → Files & Folders → Hue.\n\n%@" = "The capture could not be saved.\n\nCheck Desktop access in System Settings → Privacy & Security → Files & Folders → Hue.\n\n%@";
 "The camera image has invalid dimensions." = "The camera image has invalid dimensions.";
 "The camera image could not be prepared." = "The camera image could not be prepared.";
 "The PNG capture could not be created." = "The PNG capture could not be created.";

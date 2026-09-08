@@ -4,7 +4,7 @@ import ImageIO
 import UniformTypeIdentifiers
 
 func iconError(_ message: String) -> NSError {
-    NSError(domain: "GirafonIcon", code: 1, userInfo: [NSLocalizedDescriptionKey: message])
+    NSError(domain: "HueIcon", code: 1, userInfo: [NSLocalizedDescriptionKey: message])
 }
 
 guard (3...4).contains(CommandLine.arguments.count) else {

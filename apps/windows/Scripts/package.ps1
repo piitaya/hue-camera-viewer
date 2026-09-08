@@ -15,12 +15,12 @@ function Test-PublishedApp([string]$AppPath, [string]$Runtime, [UInt16]$Expected
         $outputPath.StartsWith($AppPath.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
         throw 'The installer output directory must be outside both published app directories.'
     }
-    foreach ($file in 'Girafon.exe', 'Girafon.deps.json', 'Girafon.runtimeconfig.json', 'coreclr.dll') {
+    foreach ($file in 'Hue.exe', 'Hue.deps.json', 'Hue.runtimeconfig.json', 'coreclr.dll') {
         if (-not (Test-Path -LiteralPath (Join-Path $AppPath $file) -PathType Leaf)) {
             throw "Missing $file. Run build.ps1 for $Runtime before packaging."
         }
     }
-    foreach ($file in 'Girafon.exe', 'coreclr.dll') {
+    foreach ($file in 'Hue.exe', 'coreclr.dll') {
         $reader = [IO.BinaryReader]::new([IO.File]::OpenRead((Join-Path $AppPath $file)))
         try {
             if ($reader.ReadUInt16() -ne 0x5A4D) { throw "$file is not a Windows executable." }
@@ -41,13 +41,13 @@ Test-PublishedApp $arm64AppPath 'win-arm64' 0xAA64
 $compiler = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe'
 if (-not (Test-Path -LiteralPath $compiler -PathType Leaf)) {
     $command = Get-Command ISCC.exe -ErrorAction SilentlyContinue
-    if (-not $command) { throw 'Install Inno Setup 6.3 or later to package Girafon.' }
+    if (-not $command) { throw 'Install Inno Setup 6.3 or later to package Hue.' }
     $compiler = $command.Source
 }
-[xml]$project = Get-Content -LiteralPath (Join-Path $PSScriptRoot '../Girafon.Windows/Girafon.Windows.csproj') -Raw
+[xml]$project = Get-Content -LiteralPath (Join-Path $PSScriptRoot '../Hue.Windows/Hue.Windows.csproj') -Raw
 $version = $project.SelectSingleNode('/Project/PropertyGroup/Version').InnerText
 if ($version -notmatch '^\d+\.\d+\.\d+(\.\d+)?$') { throw 'The app version must be a numeric release version.' }
-$iconPath = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../../../assets/Girafon.ico')).Path
+$iconPath = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../../../assets/Hue.ico')).Path
 $arguments = @(
     "/DX64AppDirectory=$x64AppPath"
     "/DArm64AppDirectory=$arm64AppPath"
@@ -58,6 +58,6 @@ $arguments = @(
 )
 & $compiler @arguments
 if ($LASTEXITCODE -ne 0) { throw "Installer packaging failed with exit code $LASTEXITCODE." }
-$installer = Join-Path $outputPath 'Girafon-Setup.exe'
+$installer = Join-Path $outputPath 'Hue-Setup.exe'
 if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) { throw 'The installer was not created.' }
-Write-Host "Packaged Girafon: $installer"
+Write-Host "Packaged Hue: $installer"

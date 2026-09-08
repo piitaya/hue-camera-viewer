@@ -1,8 +1,7 @@
 import AppKit
 import SwiftUI
 
-private let dockAccent = Color(red: 245 / 255, green: 182 / 255, blue: 49 / 255)
-private let dockSecondaryAccent = Color(red: 201 / 255, green: 93 / 255, blue: 53 / 255)
+private let dockAccent = Color(red: 89 / 255, green: 180 / 255, blue: 128 / 255)
 private let stageColor = Color(red: 0.045, green: 0.05, blue: 0.055)
 private let forceClassicDock = ProcessInfo.processInfo.arguments.contains("--classic-dock")
 
@@ -181,7 +180,7 @@ struct ContentView: View {
             if let target = previewEdge, dragCenter != nil, model.isToolbarVisible {
                 let targetSize = dockSize(for: target)
                 RoundedRectangle(cornerRadius: 29)
-                    .fill(dockSecondaryAccent.opacity(0.16))
+                    .fill(dockAccent.opacity(0.16))
                     .overlay {
                         RoundedRectangle(cornerRadius: 29)
                             .strokeBorder(.black.opacity(0.45), lineWidth: 3)
@@ -458,7 +457,7 @@ struct ContentView: View {
         case .starting, .running:
             return NSLocalizedString("Preparing the preview.", comment: "Camera empty state")
         case .denied:
-            return NSLocalizedString("Enable Girafon in System Settings → Privacy & Security → Camera.", comment: "Camera empty state")
+            return NSLocalizedString("Enable Hue in System Settings → Privacy & Security → Camera.", comment: "Camera empty state")
         case .failed(let message):
             return message
         }
