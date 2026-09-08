@@ -35,7 +35,6 @@
 "Image" = "Image";
 "Reset Orientation" = "Réinitialiser l’orientation";
 "About Girafon" = "À propos de Girafon";
-"A simple viewer for your documents.\nCamera • Rotation • Capture to Desktop" = "Un visualiseur simple pour vos documents.\nCaméra • Rotation • Capture sur le Bureau";
 "The camera could not start. Unplug it, then plug it back in." = "La caméra n’a pas pu démarrer. Débranchez-la puis rebranchez-la.";
 "The camera is temporarily unavailable. Close other apps that are using it." = "La caméra est momentanément indisponible. Fermez les autres applications qui l’utilisent.";
 "The camera is not sending any images. Check the USB cable and close other apps that are using it." = "La caméra n’envoie aucune image. Vérifiez le câble USB et fermez les applications qui l’utilisent.";
@@ -51,3 +50,13 @@
 "The camera image has invalid dimensions." = "L’image de la caméra a des dimensions invalides.";
 "The camera image could not be prepared." = "Impossible de préparer l’image de la caméra.";
 "The PNG capture could not be created." = "Impossible de créer la capture PNG.";
+"Keyboard Shortcuts…" = "Raccourcis clavier…";
+"Keyboard Shortcuts" = "Raccourcis clavier";
+"Zoom" = "Zoom";
+"Zoom In" = "Zoom avant";
+"Zoom Out" = "Zoom arrière";
+"Zoom to 100 %" = "Zoom à 100 %";
+"Zoom also follows the scroll wheel or a pinch on the trackpad." = "Le zoom suit aussi la molette de la souris ou le pincement sur le trackpad.";
+"Done" = "OK";
+"Hide or Show Controls" = "Masquer ou afficher les commandes";
+"A simple viewer for your documents.\nCamera • Rotation • Zoom • Capture to Desktop" = "Un visualiseur simple pour vos documents.\nCaméra • Rotation • Zoom • Capture sur le Bureau";

@@ -2,12 +2,21 @@ namespace Girafon.Core;
 
 public static class CaptureFile
 {
+    /// Captures use a sortable timestamp plus a random suffix, so rapid saves never collide.
+    public static string NewPath(string directory, string extension)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(directory);
+        ArgumentException.ThrowIfNullOrWhiteSpace(extension);
+        var stem = $"Girafon-{DateTime.Now:yyyy-MM-dd-HHmmss-fff}-{Guid.NewGuid():N}";
+        return Path.Combine(directory, stem + "." + extension.TrimStart('.'));
+    }
+
     public static async Task<string> WriteAsync(string directory, Func<Stream, Task> write)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(directory);
         Directory.CreateDirectory(directory);
-        var stem = $"Girafon-{DateTime.Now:yyyy-MM-dd-HHmmss-fff}-{Guid.NewGuid():N}";
-        var destination = Path.Combine(directory, stem + ".png");
+        var destination = NewPath(directory, "png");
+        var stem = Path.GetFileNameWithoutExtension(destination);
         var temporary = Path.Combine(directory, "." + stem + ".tmp");
         try
         {

@@ -5,6 +5,9 @@ A minimal camera viewer for Windows 10 (2004)+ and Windows 11, in English and Fr
 Open `Girafon-Setup.exe`, then launch Girafon from the Start menu and choose your camera.
 The installer automatically selects the native Intel/AMD or ARM version.
 Captures are saved as PNG files on your Desktop.
+The arrows rotate the image and the magnifier opens the zoom slider; the zoom also
+follows the mouse wheel or a touchpad pinch and only magnifies the preview.
+Shortcuts: Ctrl+S captures, Ctrl+← / Ctrl+→ rotate, Ctrl + / Ctrl − / Ctrl 0 zoom, Ctrl+T hides the controls.
 You can uninstall Girafon from Windows Settings → Apps.
 
 See the [camera compatibility list](../../README.md#cameras).

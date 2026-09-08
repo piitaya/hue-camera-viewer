@@ -14,6 +14,9 @@ struct ContentView: View {
     @State private var previewEdge: DockEdge?
     @State private var gripHovered = false
     @State private var captureHovered = false
+    @State private var panOffset: CGSize = .zero
+    @State private var panStart: CGSize?
+    @StateObject private var wheelZoom = WheelZoomMonitor()
 
     var body: some View {
         GeometryReader { geometry in
@@ -22,13 +25,25 @@ struct ContentView: View {
                 if camera.state == .running {
                     CameraImageView(frames: camera.frames)
                         .frame(width: geometry.size.width, height: geometry.size.height)
+                        .scaleEffect(model.zoom)
+                        .offset(panOffset)
+                        .gesture(panGesture(in: geometry.size), including: model.isZoomed ? .all : .subviews)
                 } else {
                     emptyState
                         .frame(maxWidth: 360)
                         .padding(32)
                 }
             }
+            .clipped()
+            .background(WindowReader { wheelZoom.stageView = $0 })
             .overlay { dockOverlay(in: geometry.size) }
+            .overlay(alignment: .topTrailing) {
+                if model.isZoomed {
+                    zoomPill
+                        .padding(14)
+                        .transition(.opacity)
+                }
+            }
             .overlay(alignment: .bottom) {
                 if let notice = model.notice {
                     Button(action: model.revealLastCapture) {
@@ -55,9 +70,21 @@ struct ContentView: View {
                         .allowsHitTesting(false)
                 }
             }
+            .onChange(of: model.zoom) { _ in
+                panOffset = clampedPan(panOffset, in: geometry.size)
+            }
+            .onChange(of: camera.selectedDeviceID) { _ in
+                panOffset = .zero
+            }
         }
         .background(stageColor)
         .tint(dockAccent)
+        .animation(.easeOut(duration: 0.18), value: model.isZoomed)
+        .onAppear { wheelZoom.install(handleWheel) }
+        .onDisappear { wheelZoom.remove() }
+        .sheet(isPresented: $model.isShowingShortcuts) {
+            ShortcutsView(isPresented: $model.isShowingShortcuts)
+        }
         .alert("Unable to Save", isPresented: Binding(
             get: { model.errorMessage != nil },
             set: { if !$0 { model.errorMessage = nil } }
@@ -67,6 +94,79 @@ struct ContentView: View {
             Text(model.errorMessage ?? "")
         }
     }
+
+    // MARK: Zoom
+
+    /// Scroll wheels and trackpad pinches zoom the preview around the pointer.
+    private func handleWheel(_ event: NSEvent, at pointer: CGPoint?, in size: CGSize) {
+        guard camera.state == .running else { return }
+        let factor: CGFloat
+        switch event.type {
+        case .scrollWheel:
+            let delta = event.hasPreciseScrollingDeltas ? event.scrollingDeltaY / 2 : event.scrollingDeltaY * 6
+            factor = exp(delta * 0.01)
+        case .magnify:
+            factor = 1 + event.magnification
+        default:
+            return
+        }
+        let previous = model.zoom
+        model.zoom(by: factor)
+        guard let pointer, previous > 0 else { return }
+        // Keep the image point under the pointer in place: the pointer's offset
+        // from the stage centre scales with the zoom, the pan absorbs the rest.
+        let ratio = model.zoom / previous
+        let anchor = CGSize(width: pointer.x - size.width / 2, height: pointer.y - size.height / 2)
+        panOffset = clampedPan(CGSize(width: anchor.width - (anchor.width - panOffset.width) * ratio,
+                                      height: anchor.height - (anchor.height - panOffset.height) * ratio), in: size)
+    }
+
+    private func panGesture(in size: CGSize) -> some Gesture {
+        DragGesture(minimumDistance: 2)
+            .onChanged { value in
+                let start = panStart ?? panOffset
+                if panStart == nil { panStart = start }
+                panOffset = clampedPan(CGSize(width: start.width + value.translation.width,
+                                              height: start.height + value.translation.height), in: size)
+            }
+            .onEnded { _ in panStart = nil }
+    }
+
+    /// Panning stops where the magnified image meets the edge of the stage.
+    private func clampedPan(_ offset: CGSize, in size: CGSize) -> CGSize {
+        guard model.isZoomed, let image = camera.image, size.width > 0, size.height > 0 else { return .zero }
+        let imageWidth = CGFloat(image.width), imageHeight = CGFloat(image.height)
+        let scale = min(size.width / imageWidth, size.height / imageHeight) * model.zoom
+        let limitX = max(0, (imageWidth * scale - size.width) / 2)
+        let limitY = max(0, (imageHeight * scale - size.height) / 2)
+        return CGSize(width: min(max(offset.width, -limitX), limitX),
+                      height: min(max(offset.height, -limitY), limitY))
+    }
+
+    private var zoomPill: some View {
+        Button(action: model.resetZoom) {
+            HStack(spacing: 6) {
+                Text(verbatim: "\(model.zoomPercent) %")
+                    .font(.system(size: 12, weight: .medium).monospacedDigit())
+                Image(systemName: "xmark")
+                    .font(.system(size: 9, weight: .bold))
+                    .frame(width: 18, height: 18)
+                    .background(.primary.opacity(0.09), in: Circle())
+            }
+            .foregroundStyle(.primary)
+            .padding(.leading, 12)
+            .padding(.trailing, 6)
+            .padding(.vertical, 6)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(Capsule().strokeBorder(.primary.opacity(0.10)))
+        }
+        .buttonStyle(.plain)
+        .help("Zoom to 100 %")
+        .accessibilityLabel("Zoom to 100 %")
+        .accessibilityValue(Text(verbatim: "\(model.zoomPercent) %"))
+    }
+
+    // MARK: Dock
 
     private func dockOverlay(in size: CGSize) -> some View {
         let edge = model.dockEdge
@@ -119,8 +219,10 @@ struct ContentView: View {
         .coordinateSpace(name: "cameraStage")
     }
 
+    /// Grip 26, five 42-point buttons, one divider (11), hide button 30,
+    /// seven 4-point gaps and 10-point end padding.
     private func dockSize(for edge: DockEdge) -> CGSize {
-        edge.isVertical ? CGSize(width: 58, height: 294) : CGSize(width: 294, height: 58)
+        edge.isVertical ? CGSize(width: 58, height: 325) : CGSize(width: 325, height: 58)
     }
 
     private func dock(for edge: DockEdge, in size: CGSize) -> some View {
@@ -129,9 +231,9 @@ struct ContentView: View {
         return layout {
             dragHandle(for: edge, in: size)
             cameraMenu
-            dockDivider(for: edge)
-            DockButton("Rotate Right", icon: .rotateRight) { model.rotate(1) }
             DockButton("Rotate Left", icon: .rotateLeft) { model.rotate(-1) }
+            DockButton("Rotate Right", icon: .rotateRight) { model.rotate(1) }
+            zoomButton(for: edge)
             dockDivider(for: edge)
             captureButton
             DockButton("Hide Controls", icon: chevron(for: edge, inward: false), size: 30, iconSize: 15) {
@@ -214,6 +316,16 @@ struct ContentView: View {
         }
     }
 
+    /// The popover opens away from the edge the dock sits on.
+    private func popoverArrowEdge(for edge: DockEdge) -> Edge {
+        switch edge {
+        case .left: return .trailing
+        case .right: return .leading
+        case .top: return .bottom
+        case .bottom: return .top
+        }
+    }
+
     private var cameraMenu: some View {
         Menu {
             if camera.devices.isEmpty { Text("No cameras available") }
@@ -228,6 +340,8 @@ struct ContentView: View {
                     }
                 }
             }
+            Divider()
+            Button("Keyboard Shortcuts…") { model.isShowingShortcuts = true }
         } label: {
             Text(" ").frame(width: 42, height: 42)
         }
@@ -251,6 +365,15 @@ struct ContentView: View {
 
     private var selectedCameraName: String {
         camera.devices.first { $0.id == camera.selectedDeviceID }?.name ?? NSLocalizedString("No camera selected", comment: "Fallback camera name")
+    }
+
+    private func zoomButton(for edge: DockEdge) -> some View {
+        DockButton("Zoom", icon: .zoom, isActive: model.isShowingZoom) {
+            model.isShowingZoom.toggle()
+        }
+        .popover(isPresented: $model.isShowingZoom, arrowEdge: popoverArrowEdge(for: edge)) {
+            ZoomPanel(model: model)
+        }
     }
 
     private var captureButton: some View {
@@ -285,6 +408,8 @@ struct ContentView: View {
         .help("Show Controls")
         .accessibilityLabel("Show Controls")
     }
+
+    // MARK: Empty state
 
     private var emptyState: some View {
         VStack(spacing: 12) {
@@ -340,6 +465,169 @@ struct ContentView: View {
     }
 }
 
+/// The zoom slider opens from the dock's magnifier; the wheel and pinch zoom too.
+private struct ZoomPanel: View {
+    @ObservedObject var model: AppModel
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Zoom")
+                Spacer()
+                Text(verbatim: "\(model.zoomPercent) %")
+                    .font(.system(size: 12).monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+            Slider(value: Binding(
+                get: { model.zoom },
+                set: { model.setZoom($0) }
+            ), in: AppModel.zoomRange)
+            .controlSize(.small)
+            .accessibilityLabel("Zoom")
+        }
+        .padding(16)
+        .frame(width: 230)
+        // The glass dock flips its content to dark over a dark stage, and the
+        // popover content inherits that; its window must follow the same scheme.
+        .background(WindowAppearance(colorScheme: colorScheme))
+    }
+}
+
+/// Applies the SwiftUI color scheme to the AppKit window hosting the view.
+private struct WindowAppearance: NSViewRepresentable {
+    let colorScheme: ColorScheme
+
+    func makeNSView(context: Context) -> AppearanceView {
+        AppearanceView()
+    }
+
+    func updateNSView(_ nsView: AppearanceView, context: Context) {
+        nsView.colorScheme = colorScheme
+    }
+
+    final class AppearanceView: NSView {
+        var colorScheme: ColorScheme = .light {
+            didSet { apply() }
+        }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            apply()
+        }
+
+        private func apply() {
+            window?.appearance = NSAppearance(named: colorScheme == .dark ? .darkAqua : .aqua)
+        }
+    }
+}
+
+/// One line per action, mirroring the shortcuts declared in the app menus.
+private struct ShortcutsView: View {
+    @Binding var isPresented: Bool
+
+    private let shortcuts: [(LocalizedStringKey, String)] = [
+        ("Capture to Desktop", "⌘ S"),
+        ("Rotate Left", "⌘ ←"),
+        ("Rotate Right", "⌘ →"),
+        ("Zoom In", "⌘ +"),
+        ("Zoom Out", "⌘ −"),
+        ("Zoom to 100 %", "⌘ 0"),
+        ("Hide or Show Controls", "⌥ ⌘ T"),
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Keyboard Shortcuts")
+                .font(.system(size: 15, weight: .semibold))
+            VStack(spacing: 0) {
+                ForEach(Array(shortcuts.enumerated()), id: \.offset) { index, shortcut in
+                    HStack {
+                        Text(shortcut.0)
+                        Spacer()
+                        Text(verbatim: shortcut.1)
+                            .font(.system(size: 12, weight: .medium).monospacedDigit())
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
+                    }
+                    .padding(.vertical, 7)
+                    if index < shortcuts.count - 1 {
+                        Divider()
+                    }
+                }
+            }
+            Text("Zoom also follows the scroll wheel or a pinch on the trackpad.")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+            HStack {
+                Spacer()
+                Button("Done") { isPresented = false }
+                    .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 340)
+    }
+}
+
+/// Zoom events are only honoured in the hosting window; the image settings
+/// popover and the shortcuts sheet live in their own windows. The handler
+/// receives the pointer in stage coordinates (origin top-left) and the stage size.
+private final class WheelZoomMonitor: ObservableObject {
+    weak var stageView: NSView?
+    private var monitor: Any?
+
+    func install(_ handler: @escaping (NSEvent, CGPoint?, CGSize) -> Void) {
+        guard monitor == nil else { return }
+        monitor = NSEvent.addLocalMonitorForEvents(matching: [.scrollWheel, .magnify]) { [weak self] event in
+            if let self, let stage = self.stageView, let window = stage.window, event.window === window {
+                let local = stage.convert(event.locationInWindow, from: nil)
+                let size = stage.bounds.size
+                let pointer = stage.bounds.contains(local)
+                    ? CGPoint(x: local.x, y: stage.isFlipped ? local.y : size.height - local.y)
+                    : nil
+                handler(event, pointer, size)
+            }
+            return event
+        }
+    }
+
+    func remove() {
+        if let monitor { NSEvent.removeMonitor(monitor) }
+        monitor = nil
+    }
+
+    deinit { remove() }
+}
+
+/// Reports the stage's backing NSView once it is attached to a window.
+private struct WindowReader: NSViewRepresentable {
+    let onAttach: (NSView?) -> Void
+
+    func makeNSView(context: Context) -> NSView {
+        WindowReportingView(onAttach: onAttach)
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {}
+
+    private final class WindowReportingView: NSView {
+        let onAttach: (NSView?) -> Void
+
+        init(onAttach: @escaping (NSView?) -> Void) {
+            self.onAttach = onAttach
+            super.init(frame: .zero)
+        }
+
+        required init?(coder: NSCoder) { return nil }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            onAttach(window == nil ? nil : self)
+        }
+    }
+}
+
 private struct DockSurface: ViewModifier {
     let forceClassic: Bool
 
@@ -374,6 +662,7 @@ private struct CameraImageView: View {
 
 private enum DockIcon: String {
     case source = "DockSource"
+    case zoom = "DockZoom"
     case capture = "DockCapture"
     case rotateRight = "DockRotateRight"
     case rotateLeft = "DockRotateLeft"
@@ -403,15 +692,17 @@ private struct DockButton: View {
     let icon: DockIcon
     var size: CGFloat = 42
     var iconSize: CGFloat = 21
+    var isActive = false
     let action: () -> Void
     @State private var hovering = false
 
     init(_ title: LocalizedStringKey, icon: DockIcon,
-         size: CGFloat = 42, iconSize: CGFloat = 21, action: @escaping () -> Void) {
+         size: CGFloat = 42, iconSize: CGFloat = 21, isActive: Bool = false, action: @escaping () -> Void) {
         self.title = title
         self.icon = icon
         self.size = size
         self.iconSize = iconSize
+        self.isActive = isActive
         self.action = action
     }
 
@@ -420,7 +711,7 @@ private struct DockButton: View {
             DockGlyph(icon: icon, size: iconSize)
                 .foregroundStyle(.primary)
                 .frame(width: size, height: size)
-                .background(.primary.opacity(hovering ? 0.08 : 0), in: Circle())
+                .background(.primary.opacity(isActive ? 0.14 : hovering ? 0.08 : 0), in: Circle())
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)

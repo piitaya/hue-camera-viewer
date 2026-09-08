@@ -4,15 +4,21 @@ import Foundation
 
 @MainActor
 final class AppModel: ObservableObject {
+    static let zoomRange: ClosedRange<CGFloat> = 1...4
+    private static let zoomStep: CGFloat = 1.25
+
     let camera: CameraEngine
     let isDemo: Bool
     @Published private(set) var orientation: ImageOrientation
+    @Published private(set) var zoom: CGFloat = 1
     @Published private(set) var isSaving = false
     @Published private(set) var isToolbarVisible = true
     @Published private(set) var dockEdge: DockEdge = .right
     @Published private(set) var lastCapture: URL?
     @Published private(set) var notice: String?
     @Published var errorMessage: String?
+    @Published var isShowingZoom = false
+    @Published var isShowingShortcuts = false
     private let saveQueue = DispatchQueue(label: "app.girafon.save", qos: .userInitiated)
     private var noticeTask: Task<Void, Never>?
     private var cameraChanges: AnyCancellable?
@@ -63,8 +69,18 @@ final class AppModel: ObservableObject {
         camera.state == .running && camera.image != nil && !isSaving
     }
 
+    var isZoomed: Bool { zoom > 1.001 }
+
+    var zoomPercent: Int { Int((zoom * 100).rounded()) }
+
+    // MARK: Image
+
     func rotate(_ direction: Int) {
-        orientation.quarterTurns = (orientation.quarterTurns + direction + 4) % 4
+        setRotation(orientation.quarterTurns + direction)
+    }
+
+    func setRotation(_ quarterTurns: Int) {
+        orientation.quarterTurns = ((quarterTurns % 4) + 4) % 4
         commitOrientation()
     }
 
@@ -79,6 +95,25 @@ final class AppModel: ObservableObject {
             UserDefaults.standard.set(data, forKey: "girafon.orientation")
         }
     }
+
+    /// The zoom magnifies the preview only; captures keep the full image.
+    func setZoom(_ value: CGFloat) {
+        let clamped = min(max(value, Self.zoomRange.lowerBound), Self.zoomRange.upperBound)
+        zoom = clamped < 1.001 ? 1 : clamped
+    }
+
+    func zoom(by factor: CGFloat) {
+        guard factor.isFinite, factor > 0 else { return }
+        setZoom(zoom * factor)
+    }
+
+    func zoomIn() { zoom(by: Self.zoomStep) }
+
+    func zoomOut() { zoom(by: 1 / Self.zoomStep) }
+
+    func resetZoom() { setZoom(1) }
+
+    // MARK: Capture
 
     func capture() {
         guard canRequestCapture else { return }
@@ -136,6 +171,8 @@ final class AppModel: ObservableObject {
             NSWorkspace.shared.open(url)
         }
     }
+
+    // MARK: Controls
 
     func toggleToolbar() {
         isToolbarVisible.toggle()

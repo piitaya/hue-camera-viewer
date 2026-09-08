@@ -4,7 +4,7 @@
 
 **English** | [Français](README.fr.md)
 
-A minimal document camera viewer: live preview, 90° rotation, and PNG captures
+A minimal document camera viewer: live preview, rotation and zoom, and PNG captures
 saved to your Desktop, with a movable, collapsible toolbar.
 
 **English and French · Native apps for macOS and Windows**

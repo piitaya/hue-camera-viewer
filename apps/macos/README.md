@@ -1,7 +1,7 @@
 # Girafon for macOS
 
-A minimal macOS app for document cameras: live preview, 90° rotation,
-and PNG capture to the Desktop, with a movable, collapsible dock.
+A minimal macOS app for document cameras: live preview, rotation and zoom,
+and PNG captures saved to the Desktop, with a movable, collapsible dock.
 
 **macOS 13+ · Intel and Apple Silicon · English and French**
 
@@ -23,6 +23,19 @@ open build/Girafon.app
 
 Run tests with `bash Scripts/test.sh`.
 Use `open -na build/Girafon.app --args --demo` to develop without a camera.
+
+## Controls
+
+The dock groups the camera, rotation and zoom on one side of a divider and the
+capture button on the other. The magnifier opens the zoom slider; the zoom also
+follows the scroll wheel or a trackpad pinch and only magnifies the preview.
+
+| Action | Shortcut |
+| --- | --- |
+| Capture to Desktop | ⌘S |
+| Rotate left / right | ⌘← / ⌘→ |
+| Zoom in / out / 100 % | ⌘+ / ⌘− / ⌘0 |
+| Hide or show controls | ⌥⌘T |
 
 After editing `assets/girafon.svg` or the Icon Composer settings, regenerate the shared
 PNG and Windows ICO with `bash Scripts/export-icon.sh`.

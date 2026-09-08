@@ -40,6 +40,18 @@ public sealed class PersistenceTests : IDisposable
     }
 
     [Fact]
+    public void CapturePathsAreUniqueAndSortable()
+    {
+        var first = CaptureFile.NewPath(directory, "mp4");
+        var second = CaptureFile.NewPath(directory, ".mp4");
+        Assert.NotEqual(first, second);
+        Assert.EndsWith(".mp4", first);
+        Assert.EndsWith(".mp4", second);
+        Assert.Equal(directory, Path.GetDirectoryName(first));
+        Assert.StartsWith("Girafon-", Path.GetFileName(first));
+    }
+
+    [Fact]
     public async Task ConcurrentCapturesAreUniqueAndNeverOverwriteExistingFiles()
     {
         Directory.CreateDirectory(directory);

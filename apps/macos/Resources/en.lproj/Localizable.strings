@@ -35,7 +35,6 @@
 "Image" = "Image";
 "Reset Orientation" = "Reset Orientation";
 "About Girafon" = "About Girafon";
-"A simple viewer for your documents.\nCamera • Rotation • Capture to Desktop" = "A simple viewer for your documents.\nCamera • Rotation • Capture to Desktop";
 "The camera could not start. Unplug it, then plug it back in." = "The camera could not start. Unplug it, then plug it back in.";
 "The camera is temporarily unavailable. Close other apps that are using it." = "The camera is temporarily unavailable. Close other apps that are using it.";
 "The camera is not sending any images. Check the USB cable and close other apps that are using it." = "The camera is not sending any images. Check the USB cable and close other apps that are using it.";
@@ -51,3 +50,13 @@
 "The camera image has invalid dimensions." = "The camera image has invalid dimensions.";
 "The camera image could not be prepared." = "The camera image could not be prepared.";
 "The PNG capture could not be created." = "The PNG capture could not be created.";
+"Keyboard Shortcuts…" = "Keyboard Shortcuts…";
+"Keyboard Shortcuts" = "Keyboard Shortcuts";
+"Zoom" = "Zoom";
+"Zoom In" = "Zoom In";
+"Zoom Out" = "Zoom Out";
+"Zoom to 100 %" = "Zoom to 100 %";
+"Zoom also follows the scroll wheel or a pinch on the trackpad." = "Zoom also follows the scroll wheel or a pinch on the trackpad.";
+"Done" = "Done";
+"Hide or Show Controls" = "Hide or Show Controls";
+"A simple viewer for your documents.\nCamera • Rotation • Zoom • Capture to Desktop" = "A simple viewer for your documents.\nCamera • Rotation • Zoom • Capture to Desktop";

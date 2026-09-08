@@ -27,6 +27,17 @@ enum ImagePipelineError: LocalizedError {
     }
 }
 
+/// Captures use a sortable timestamp plus a random suffix, so rapid saves never collide.
+enum CaptureNaming {
+    static func fileName(prefix: String, extension fileExtension: String, now: Date = Date()) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.dateFormat = "yyyy-MM-dd_HH-mm-ss-SSS"
+        return "\(prefix)_\(formatter.string(from: now))_\(UUID().uuidString).\(fileExtension)"
+    }
+}
+
 /// Keep one processor on the camera's frame queue to reuse its rendering context.
 final class ImageProcessor {
     private let colorSpace: CGColorSpace
@@ -89,19 +100,13 @@ final class ImageProcessor {
             throw ImagePipelineError.pngEncodingFailed
         }
 
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.dateFormat = "yyyy-MM-dd_HH-mm-ss-SSS"
-        let timestamp = formatter.string(from: now)
-
         // The temporary file shares the destination's filesystem, so rename is atomic.
         let temporaryURL = directory.appendingPathComponent(".girafon-\(UUID().uuidString).tmp")
         try (data as Data).write(to: temporaryURL, options: .withoutOverwriting)
         defer { try? FileManager.default.removeItem(at: temporaryURL) }
 
         while true {
-            let name = "Capture_\(timestamp)_\(UUID().uuidString).png"
+            let name = CaptureNaming.fileName(prefix: "Capture", extension: "png", now: now)
             let outputURL = directory.appendingPathComponent(name)
             let status = temporaryURL.withUnsafeFileSystemRepresentation { source in
                 outputURL.withUnsafeFileSystemRepresentation { target in
